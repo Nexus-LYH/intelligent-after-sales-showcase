@@ -1,0 +1,1 @@
+<template><section class="panel"><p class="eyebrow">ACCESS CONTROL</p><h1>此页面当前不可访问</h1><p>请检查页面地址或当前账号权限。不会展示其他租户或账号的正文。</p><el-button @click="$router.push('/account')">返回本人账户</el-button></section></template>

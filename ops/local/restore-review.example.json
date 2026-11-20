@@ -1,0 +1,8 @@
+{
+  "mysqlExecutable": "REPLACE_PINNED_MYSQL_CLIENT",
+  "mysqlSha256": "REPLACE_SHA256",
+  "mysqlOptionFile": "REPLACE_RESTRICTED_REVIEW_OPTION_FILE",
+  "principals": [
+    {"schema":"ias_identity_test","sourceUser":"REPLACE_SOURCE_USER","restoreUser":"REPLACE_DEDICATED_RESTORE_USER","targetSchema":"REPLACE_ISOLATED_TARGET"}
+  ]
+}

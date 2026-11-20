@@ -1,0 +1,17 @@
+{
+  "version":"1.0.0-slice.1",
+  "scope":"Approval parts current-self in-app messages; not email, replay management or full FR-NOTIFY acceptance",
+  "security":{"ingress":"TLS EdgeFilter gateway-notification; public requests never choose actor/tenant","session":"Current IAS-SESSION-DEV via identity NOTIFICATION_READ/NOTIFICATION_WRITE","write":"Current CSRF + allowed Origin; only self; online approval READ plus current identity reviewer/applicant eligibility before history replay","cache":"no-store","currentObjectLeaseSeconds":30},
+  "message":{"id":"canonical UUID","type":"approval.submitted|approval.approved|approval.rejected|approval.withdrawn|approval.terminated","title":"string","body":"generic string without owner private text","createdAt":"UTC ISO instant","occurredAt":"UTC ISO instant","read":"boolean","readAt":"UTC ISO instant|null; non-null iff read","object":{"type":"APPROVAL_PARTS","id":"canonical approval UUID","route":"/approvals/parts/{id}"}},
+  "routes":[
+    {"method":"GET","path":"/api/notification/messages","query":{"page":"positive integer <=100000; default1","size":"20|50|100; default20"},"response":{"items":"Message[]; current qualified objects only","total":"number after current-rights filtering","page":"number","size":"number"}},
+    {"method":"GET","path":"/api/notification/messages/{messageId}","response":"Message"},
+    {"method":"POST","path":"/api/notification/messages/{messageId}/read","headers":{"Idempotency-Key":"one canonical UUID"},"body":{},"response":{"operationId":"original UUID","messageId":"original target UUID","state":"READ","readAt":"first-read UTC instant"}},
+    {"method":"GET","path":"/api/notification/read-operations/{operationId}","response":"same read result; current object permission required; pure query"}
+  ],
+  "errors":{"400":"VALIDATION_ERROR: extra/query/actor fields or invalid UUID/header/body","401":"current session invalid","403":"current write origin/CSRF or edge denied","404":"TARGET_NOT_ACCESSIBLE; OPERATION_NOT_OBSERVED only on a missing original read operation","409":"IDEMPOTENCY_CONFLICT: same actor original UUID bound to another message","503":"dependency/storage/current authorization cannot be proved; query only, no new UUID"},
+  "recovery":"401/403 never enable retry. After unknown POST query original read operation; only explicit OPERATION_NOT_OBSERVED404 allows same original UUID+same target explicit resubmit. Late replies remain bound to identity generation/component/target/original UUID. No GET writes.",
+  "internal":{"method":"POST","path":"/internal/notification/events","edge":"approval-notification","body":{"event":"canonical DomainEvent map, exact one top-level key; authority/recipients forbidden"},"ack":{"eventId":"original event UUID","ack":"COMMITTED|COMMITTED_DUPLICATE"},"atomicity":"event_inbox and all actual notification_message rows commit in one local physical transaction; ACK only after commit; same event UUID different envelope409","recipients":"resolve immutable owner notification-context DELIVERY exact event match, then current identity eligibility; submitted and terminal current reviewers plus eligible applicant; no reviewer still current applicant. No browser actor or event payload authority."},
+  "bounds":{"bodyBytes":65536,"recipients":1000,"candidateMessages":1000,"exceeded":"503 explicit failure; never truncate total and claim complete"},
+  "evidence":"Local H2/MVC/adapter/wiring only until BE-0 real TLS/MySQL/browser evidence; do not label local tests real deployment"
+}

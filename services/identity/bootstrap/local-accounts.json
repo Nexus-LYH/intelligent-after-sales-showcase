@@ -1,0 +1,13 @@
+{
+  "tenants": [
+    {"code": "IAS_LOCAL_A", "name": "本地服务商A"},
+    {"code": "IAS_LOCAL_B", "name": "本地服务商B"}
+  ],
+  "users": [
+    {"realm": "PLATFORM", "tenantCode": null, "account": "platform.operator", "displayName": "本地平台管理员", "administrator": true, "passwordRef": "platformP"},
+    {"realm": "TENANT", "tenantCode": "IAS_LOCAL_A", "account": "tenant.admin1", "displayName": "A管理员一", "administrator": true, "passwordRef": "tenantA1"},
+    {"realm": "TENANT", "tenantCode": "IAS_LOCAL_A", "account": "tenant.admin2", "displayName": "A管理员二", "administrator": true, "passwordRef": "tenantA2"},
+    {"realm": "TENANT", "tenantCode": "IAS_LOCAL_A", "account": "staff.member", "displayName": "A普通员工", "administrator": false, "passwordRef": "employeeE"},
+    {"realm": "TENANT", "tenantCode": "IAS_LOCAL_B", "account": "tenant.admin", "displayName": "B管理员", "administrator": true, "passwordRef": "tenantB"}
+  ]
+}

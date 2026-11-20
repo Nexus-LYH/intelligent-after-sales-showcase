@@ -1,0 +1,7 @@
+import {mkdir,writeFile} from 'node:fs/promises'
+import {resolve} from 'node:path'
+process.env.IAS_BATCH8_FIXTURE_ONLY='1'
+const {setup,db8,addRequest,replyForm,pick,open,browser,assert}=await import('./batch8-ui-check.mjs')
+const out=process.env.IAS_BATCH8_EVIDENCE||resolve('runtime/batch8-mobile'),results=[];await mkdir(out,{recursive:true})
+try{for(const width of[390,1280]){const db=db8('IN_PROGRESS');addRequest(db);const f=await setup('customer',db);try{await f.page.setViewportSize({width,height:950});await open(f);await replyForm(f.page);await pick(f.page);await f.page.locator('.supplement-files article').filter({hasText:'READY'}).waitFor();const dimensions=await f.page.evaluate(()=>({viewport:innerWidth,document:document.documentElement.scrollWidth,body:document.body.scrollWidth}));await f.page.screenshot({path:resolve(out,`synthetic-reply-${width}.png`),fullPage:true});assert(dimensions.document<=dimensions.viewport&&dimensions.body<=dimensions.viewport,'horizontal overflow');results.push({width,status:'PASS',dimensions})}catch(e){results.push({width,status:'FAIL',failure:e.message})}finally{await f.ctx.close()}}}finally{await writeFile(resolve(out,'batch8-mobile-results.json'),JSON.stringify({layer:'REAL_CHROME_SYNTHETIC_HTTP_RESPONSIVE_CHECK',results},null,2));await browser.close()}
+console.log(JSON.stringify(results));if(results.some(r=>r.status==='FAIL'))process.exitCode=1

@@ -1,0 +1,26 @@
+{
+  "users": [
+    {
+      "account": "ops.admin",
+      "displayName": "第六批A建档员",
+      "tenantCode": "IAS6_A",
+      "administrator": true,
+      "realm": "TENANT",
+      "passwordRef": "b11ExistingAdminValidation"
+    },
+    {
+      "account": "supervisor.reopen.browser",
+      "displayName": "重开审批验证主管",
+      "tenantCode": "IAS6_A",
+      "administrator": false,
+      "realm": "TENANT",
+      "passwordRef": "b11SupervisorInitial"
+    }
+  ],
+  "tenants": [
+    {
+      "code": "IAS6_A",
+      "name": "第六批独立服务商A"
+    }
+  ]
+}

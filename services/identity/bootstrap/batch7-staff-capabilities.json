@@ -1,0 +1,47 @@
+{
+  "operationId": "93dbf5ee-8985-4c48-8493-8ec4ab3c9d5d",
+  "tenants": [
+    {
+      "tenantCode": "IAS6_A",
+      "departments": [],
+      "employees": [
+        {
+          "mode": "CHANGE",
+          "account": "engineer.browser",
+          "enabled": true,
+          "companyIds": [],
+          "capabilities": [
+            "ticket.assignment.accept",
+            "ticket.engineer.read",
+            "ticket.record",
+            "ticket.solution.submit"
+          ],
+          "departmentCode": "ENGINEERING_1",
+          "expectedVersion": 2,
+          "assignableDepartmentCodes": []
+        },
+        {
+          "mode": "CHANGE",
+          "account": "service.browser",
+          "enabled": true,
+          "companyIds": [
+            "246"
+          ],
+          "capabilities": [
+            "ticket.accept",
+            "ticket.assign",
+            "ticket.close",
+            "ticket.read",
+            "ticket.reject"
+          ],
+          "departmentCode": null,
+          "expectedVersion": 2,
+          "assignableDepartmentCodes": [
+            "ENGINEERING_1",
+            "ENGINEERING_2"
+          ]
+        }
+      ]
+    }
+  ]
+}

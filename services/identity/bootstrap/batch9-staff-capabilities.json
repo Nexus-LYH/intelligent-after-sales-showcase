@@ -1,0 +1,34 @@
+{
+  "operationId": "557e0d24-9492-4ea4-9c24-f2a42ad0037e",
+  "tenants": [
+    {
+      "tenantCode": "IAS6_A",
+      "employees": [
+        {
+          "departmentCode": null,
+          "companyIds": [
+            "246"
+          ],
+          "mode": "CHANGE",
+          "enabled": true,
+          "capabilities": [
+            "ticket.accept",
+            "ticket.assign",
+            "ticket.close",
+            "ticket.read",
+            "ticket.reject",
+            "ticket.supplement.request",
+            "ticket.cancel.review"
+          ],
+          "assignableDepartmentCodes": [
+            "ENGINEERING_1",
+            "ENGINEERING_2"
+          ],
+          "expectedVersion": 4,
+          "account": "service.browser"
+        }
+      ],
+      "departments": []
+    }
+  ]
+}

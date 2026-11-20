@@ -1,0 +1,102 @@
+{
+  "tenants": [
+    {
+      "code": "IAS6_A",
+      "name": "第六批独立服务商A"
+    },
+    {
+      "code": "IAS6_B",
+      "name": "第六批独立服务商B"
+    }
+  ],
+  "users": [
+    {
+      "realm": "TENANT",
+      "tenantCode": "IAS6_A",
+      "account": "ops.admin",
+      "displayName": "第六批A建档员",
+      "administrator": true,
+      "passwordRef": "b6AOps"
+    },
+    {
+      "realm": "TENANT",
+      "tenantCode": "IAS6_A",
+      "account": "service.alpha",
+      "displayName": "A企业一客服",
+      "administrator": false,
+      "passwordRef": "b6ACs1"
+    },
+    {
+      "realm": "TENANT",
+      "tenantCode": "IAS6_A",
+      "account": "service.beta",
+      "displayName": "A企业二客服",
+      "administrator": false,
+      "passwordRef": "b6ACs2"
+    },
+    {
+      "realm": "TENANT",
+      "tenantCode": "IAS6_A",
+      "account": "engineer.alpha",
+      "displayName": "A工程师一",
+      "administrator": false,
+      "passwordRef": "b6AEng1"
+    },
+    {
+      "realm": "TENANT",
+      "tenantCode": "IAS6_A",
+      "account": "engineer.beta",
+      "displayName": "A工程师二",
+      "administrator": false,
+      "passwordRef": "b6AEng2"
+    },
+    {
+      "realm": "TENANT",
+      "tenantCode": "IAS6_A",
+      "account": "staff.ineligible",
+      "displayName": "A无接单资格员工",
+      "administrator": false,
+      "passwordRef": "b6ANo"
+    },
+    {
+      "realm": "TENANT",
+      "tenantCode": "IAS6_B",
+      "account": "ops.admin",
+      "displayName": "第六批B建档员",
+      "administrator": true,
+      "passwordRef": "b6BOps"
+    },
+    {
+      "realm": "TENANT",
+      "tenantCode": "IAS6_B",
+      "account": "service.alpha",
+      "displayName": "B客服",
+      "administrator": false,
+      "passwordRef": "b6BCs1"
+    },
+    {
+      "realm": "TENANT",
+      "tenantCode": "IAS6_B",
+      "account": "engineer.alpha",
+      "displayName": "B工程师",
+      "administrator": false,
+      "passwordRef": "b6BEng1"
+    },
+    {
+      "realm": "TENANT",
+      "tenantCode": "IAS6_A",
+      "account": "service.browser",
+      "displayName": "浏览器首次登录客服",
+      "administrator": false,
+      "passwordRef": "b6ABrowserCs"
+    },
+    {
+      "realm": "TENANT",
+      "tenantCode": "IAS6_A",
+      "account": "engineer.browser",
+      "displayName": "浏览器首次登录工程师",
+      "administrator": false,
+      "passwordRef": "b6ABrowserEng"
+    }
+  ]
+}

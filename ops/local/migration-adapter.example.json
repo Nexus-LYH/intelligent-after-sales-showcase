@@ -1,0 +1,8 @@
+{
+  "java": {"path":"C:/ias-local/Develop/jdk21/bin/java.exe","sha256":"REPLACE_SHA256"},
+  "ticketJar": {"path":"REPLACE_PINNED_TICKET_JAR","sha256":"REPLACE_SHA256"},
+  "accountsPath": "REPLACE_WITH_RESTRICTED_MIGRATION_ACCOUNT_REFERENCES",
+  "schemas": [
+    {"name":"ias_identity_test","directory":"REPLACE_PINNED_MIGRATION_DIRECTORY","files":[{"name":"REPLACE_V1__NAME.sql","sha256":"REPLACE_SHA256"}]}
+  ]
+}

@@ -1,0 +1,13 @@
+<script setup lang="ts">
+import { ref, watch, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { assets, activeStatus, type AssetRecord } from '../../../staff/src/asset-api'
+import { useAssetWork } from '../../../staff/src/asset-work'
+const route = useRoute(), work = useAssetWork(() => route.fullPath), device = ref<AssetRecord | null>(null), company = ref<AssetRecord | null>(null)
+// Only an internal device-list target can be used as a back link.
+const back = computed(() => typeof route.query.back === 'string' && /^\/devices(?:\?|$)/.test(route.query.back) ? route.query.back : '/devices')
+async function load() { const scope = work.begin(); device.value = null; company.value = null; try { const reply = await assets.detail('devices', String(route.params.id)); if (!scope.current()) return; const summary = await assets.myCompanies(); if (!scope.current()) return; company.value = summary.items.find(c => c.id === reply.companyId) ?? null; device.value = reply } catch (e) { work.fail(e, scope) } finally { work.finish(scope) } }
+watch(() => route.params.id, load, { immediate: true })
+</script>
+<template><section class="page-heading"><RouterLink :to="back">← 返回授权设备</RouterLink><p class="eyebrow">EQUIPMENT RECORD</p><h1>{{ device?.code || '设备详情' }}</h1><p>只读档案，不可修改设备归属或保修。</p></section><section class="panel"><p v-if="work.loading.value" role="status">正在核对当前设备权限…</p><p v-if="work.message.value" role="alert">{{ work.message.value }} <small>{{ work.trace.value }}</small></p><template v-if="device"><div class="section-heading"><RouterLink v-if="device.status === 'ENABLED' && company?.status === 'ENABLED'" :to="{ path: '/repairs/new', query: { deviceId: device.id } }">提交报修</RouterLink><h2>{{ device.modelName || '设备基本资料' }}</h2><el-tag :type="device.status === 'ENABLED' ? 'success' : 'info'">{{ activeStatus(device.status) }}</el-tag></div><p v-if="device.status !== 'ENABLED'" class="notice">设备已停用，请联系服务商。保留只读档案。</p><p v-if="company?.status === 'DISABLED'" class="notice">所属企业已停用：{{ company.disabledReason || '联系服务商了解当前服务安排。' }}</p><dl class="details"><dt>设备编号</dt><dd>{{ device.code }}</dd><dt>序列号</dt><dd>{{ device.serialNumber }}</dd><dt>{{ device.modelName ? '产品型号' : '产品型号ID' }}</dt><dd>{{ device.modelName || device.modelId }}</dd><dt>所属企业</dt><dd>{{ company?.name || device.companyId }}</dd><dt>安装位置</dt><dd>{{ device.location || '未提供' }}</dd><dt>购入日期</dt><dd>{{ device.purchaseDate || '未提供' }}</dd><dt>保修开始</dt><dd>{{ device.warrantyStart || '未提供' }}</dd><dt>保修结束</dt><dd>{{ device.warrantyEnd || '未提供' }}</dd></dl></template><p v-if="!device && !work.loading.value">设备不可用或当前无权查看，未显示旧正文。</p><el-button :disabled="work.loading.value" @click="load">重新查询</el-button></section></template>
+

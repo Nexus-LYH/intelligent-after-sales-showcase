@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: finance
+  datasource:
+    url: ${IAS_FINANCE_JDBC_URL:jdbc:mysql://127.0.0.1:3307/ias_finance_test?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true}
+    username: ${IAS_FINANCE_DB_USER}
+    password: ${IAS_FINANCE_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 3
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+  sql:
+    init:
+      mode: never
+server:
+  address: 127.0.0.1
+  port: ${IAS_FINANCE_PORT:8447}
+  error:
+    include-message: never
+    include-stacktrace: never

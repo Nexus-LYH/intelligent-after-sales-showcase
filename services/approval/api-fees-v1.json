@@ -1,0 +1,265 @@
+{
+  "version": "fee-approval-production-1.0",
+  "status": "SOURCE_FROZEN_PENDING_REAL_INTEGRATION",
+  "owner": "approval",
+  "moneyUnit": "CNY_CENTS",
+  "runtimeVerified": false,
+  "publicApi": {
+    "idempotency": "Canonical body operationId must equal sole Idempotency-Key. New actions require FEE_SUBMIT/FEE_REVIEW/FEE_FINANCE with current CSRF; known original UUID POST recovery requires FEE_RECOVER (fees.read + actual CSRF) and current object-read scope; never re-executes the historical action.",
+    "submit": {
+      "operationId": "UUID",
+      "applicationId": "UUID chosen once by client",
+      "ticketId": "UUID",
+      "groupId": "UUID",
+      "quoteId": "UUID"
+    },
+    "refresh": {
+      "operationId": "UUID",
+      "expectedVersion": "positive canonical decimal string"
+    },
+    "decision": {
+      "operationId": "UUID",
+      "expectedVersion": "positive canonical decimal string",
+      "decision": "APPROVE | REJECT",
+      "reason": "string <=500; REJECT requires nonblank"
+    },
+    "withdrawal": {
+      "operationId": "UUID",
+      "expectedVersion": "positive canonical decimal string",
+      "reason": "nonblank string <=500"
+    },
+    "responseFields": [
+      "applicationId",
+      "ticketId",
+      "roundId",
+      "companyId",
+      "groupId",
+      "quoteId",
+      "quoteVersion",
+      "applicantUserId",
+      "state",
+      "version",
+      "generation",
+      "chargesCustomer",
+      "financialReviewRequired",
+      "basis",
+      "customerConfirmation",
+      "operationId",
+      "supervisorReceiptId",
+      "financeReceiptId",
+      "completionId",
+      "termination",
+      "terminalReason",
+      "actions",
+      "lines",
+      "coverageDigest"
+    ],
+    "basisFields": [
+      "qCents",
+      "cCents",
+      "hCents",
+      "bCents",
+      "thresholdCents",
+      "ruleVersion",
+      "everRequiredFinance"
+    ],
+    "types": "All IDs, monetary cents and versions are strings; UUID canonical lowercase. Status/decision uppercase. Boolean fields JSON booleans.",
+    "history": "Write/original-operation responses are immutable historical receipts; actions=[]; do not merge old version/state into a newer current detail. Detail/list are re-authorized current projections.",
+    "actions": [
+      "refresh",
+      "approve",
+      "reject",
+      "withdraw"
+    ],
+    "list": "ticketId required; page default1 max100000; size=20|50|100; duplicate/unknown query keys rejected; {items,page,size,hasMore}, current object scope rechecked on each item",
+    "forbiddenBrowserFields": [
+      "basis",
+      "generation",
+      "threshold",
+      "ruleVersion",
+      "approved",
+      "confirmed",
+      "reviewerId",
+      "qualification flags"
+    ],
+    "quoteContext": {
+      "method": "GET",
+      "path": "/api/approval/fees/quote-context",
+      "exactQueryKeys": [
+        "ticketId",
+        "groupId",
+        "quoteId"
+      ],
+      "fields": [
+        "ticketId",
+        "roundId",
+        "companyId",
+        "groupId",
+        "quoteId",
+        "quoteVersion",
+        "generation",
+        "chargesCustomer",
+        "financialReviewRequired",
+        "basis",
+        "lines",
+        "coverageDigest",
+        "customerConfirmation",
+        "current",
+        "ownerAcksComplete",
+        "existingApplicationId",
+        "canSubmit",
+        "checkedAt"
+      ],
+      "nullable": [
+        "customerConfirmation",
+        "existingApplicationId"
+      ],
+      "canSubmit": "Current qualified assigned engineer + current original quote/round + completed durable owner ACKs + no application yet for this quote. Paid unconfirmed quote may submit as WAITING_CUSTOMER. POST always rechecks; GET creates no application or operation."
+    }
+  },
+  "immutableBasis": [
+    "tenantId",
+    "companyId",
+    "ticketId",
+    "roundId",
+    "faultRelationId",
+    "groupId",
+    "quoteId",
+    "quoteVersion",
+    "groupVersion",
+    "generation",
+    "q",
+    "c",
+    "h",
+    "b",
+    "threshold",
+    "ruleVersion",
+    "everFinance",
+    "financialReviewRequired",
+    "chargesCustomer",
+    "quoteDigest",
+    "freezeDigest"
+  ],
+  "states": [
+    "WAITING_CUSTOMER",
+    "WAITING_CONFIGURATION",
+    "PENDING_SUPERVISOR",
+    "WAITING_FINANCE",
+    "COMPLETED",
+    "REJECTED",
+    "WITHDRAWN",
+    "TERMINATED"
+  ],
+  "actions": [
+    "SUBMIT",
+    "REFRESH",
+    "APPROVE",
+    "REJECT",
+    "WITHDRAW"
+  ],
+  "authorities": {
+    "identity": "Online FEE_READ/SUBMIT/REVIEW/FINANCE/RECOVER purposes, current employee+enabled department+company scope+explicit capability; exact fee-recipients tenantId/companyId/departmentId/applicantUserId lists exclude applicant",
+    "finance": "approval-finance POST /internal/finance/fee-approval-context exact sessionToken/groupId/quoteId/ticketId; original immutable quote basis, separate basisGroupVersion/currentGroupVersion, original source binding, exact confirmation and original lines",
+    "ticket": "approval-ticket POST /internal/ticket/fee-approval-context same exact4 keys; currentActorUserId is caller, actorUserId/sourceActorUserId are source actor, original14 wire must match local committed owner fence",
+    "local": "Frozen ruleVersion/threshold must match original approval_fee_rule_publication; no latest rule or default T substitution. Generation row current, OPEN and immutable full14 fence/COMMITTED terminal/result bindings checked under same local lock."
+  },
+  "networkLockBoundary": "All F/W/I network calls and original W proof reads before local transaction locks; freshness bounded by 2s and request deadline; transaction rechecks cached freshness and immutable local binding/generation. Stale proofs fail closed, no remote network under P business lock.",
+  "routing": "B=max(Q,C,H), frozen financialReviewRequired=(everFinance || B>T); paid unconfirmed WAITING_CUSTOMER has no internal decision; independent current supervisor first then finance if frozen branch required. Missing eligible node -> WAITING_CONFIGURATION. Reject requires reason, withdraw only current authorized applicant, terminal history immutable.",
+  "assignment": "Current assignmentId/departmentId/engineerUserId/currentRoundId must equal original persisted submission binding for a new existing-application mutation. Old original results may still be read with current object-read scope; no old callback restores assignment or permissions.",
+  "completionProtocol": {
+    "edges": [
+      "finance-approval",
+      "ticket-approval"
+    ],
+    "query": {
+      "method": "POST",
+      "path": "/internal/approval/fee-completions/query",
+      "exactKeys": [
+        "tenantId",
+        "companyId",
+        "groupId",
+        "completionId"
+      ]
+    },
+    "group": {
+      "method": "POST",
+      "path": "/internal/approval/fee-completions/group",
+      "exactKeys": [
+        "tenantId",
+        "companyId",
+        "groupId"
+      ],
+      "responseKeys": [
+        "tenantId",
+        "companyId",
+        "groupId",
+        "completions",
+        "checkedAt"
+      ],
+      "limit": 1000,
+      "overflow": "503 FEE_COMPLETION_GROUP_LIMIT",
+      "order": "completionId ascending",
+      "itemCheckedAt": "Only top-level checkedAt for group. Individual facts are exact immutable stored completion payloads, same as query excluding checkedAt."
+    },
+    "factFields": [
+      "tenantId",
+      "actorUserId",
+      "companyId",
+      "ticketId",
+      "roundId",
+      "faultRelationId",
+      "groupId",
+      "quoteId",
+      "quoteVersion",
+      "quoteDigest",
+      "applicationId",
+      "generation",
+      "state",
+      "completionId",
+      "supervisorReceiptId",
+      "financeReceiptId",
+      "financialReviewRequired",
+      "coverageDigest",
+      "lines"
+    ],
+    "actorUserId": "Real final completing approver; finance node if required, otherwise supervisor. Never source actor or old session guess.",
+    "decisionReceiptIds": "Original immutable decision operation UUIDs. Finance receipt null if no finance branch required.",
+    "coverageDigest": "SHA256 lowercase hex: original lines sorted by id UUID lexical order; each exact5 string keys id,ticketId,roundId,amountCents,kind in TreeMap; compact Chain.JSON UTF8. Duplicate IDs/unknown kind/extra keys rejected.",
+    "delivery": "P exposes immutable service facts only; W owns reliable group pull and F mirror/H coordination. No P push into F, no fake delivered marker."
+  },
+  "termination": {
+    "migration": "V9__fee_approval_owner_facts.sql",
+    "scope": "Verified W full14 binding, same tenant/ticket/company/group, original generation < new fenced generation, nonterminal applications only",
+    "transaction": "Persist new P generation fence FIRST; under same generation lock append exact termination receipt plus operation/audit/outbox, then compute final owner ACK snapshot. Any failure rolls all back.",
+    "history": "Original fee application snapshot/state and original operations unchanged; detail/list derive TERMINATED and resultingVersion from append-only termination receipt. No applicant-withdraw fabrication, no client basis generation rewrite.",
+    "completed": "COMPLETED and its completion fact unchanged; old completion is historical fact, not permission for new-generation execution."
+  },
+  "transaction": "Same physical transaction: generation lock -> application -> operation -> state/receipt/audit/outbox plus immutable binding/decision/completion. Known original replay only returns historical receipt after current read authorization. SQL/runtime rollback failure ->503 OPERATION_RESULT_UNKNOWN; no autoCommit restoration and uncertain connection discarded.",
+  "minimumRuntimeGrants": {
+    "fee_approval_application": "SELECT, INSERT, UPDATE(state,row_version,snapshot,updated_at)",
+    "appendOnlyTables": [
+      "fee_approval_operation",
+      "fee_approval_audit",
+      "fee_approval_outbox",
+      "fee_approval_binding",
+      "fee_approval_decision",
+      "fee_approval_completion",
+      "fee_approval_termination"
+    ],
+    "appendOnly": "SELECT,INSERT only; no UPDATE or DELETE",
+    "existing": "Existing generation mutation columns and immutable fence/ACK/terminal SELECT; approval_fee_rule_publication SELECT only"
+  },
+  "remainingAcceptance": [
+    "Explicit V8/V9 fresh/default MySQL migration and actual minimum grants before new JAR",
+    "Real default trusted TLS/current identity+CSRF/fee branch and original result tests",
+    "Real freeze termination/completion+H mirror races and transaction faults",
+    "Frontend real page integration and independent QA",
+    "Fee outbox notification production delivery not yet connected; local outbox persistence alone is not delivered",
+    "Completed approval cancellation requires a separate future immutable cancellation/execution-release fact; no terminal rewrite"
+  ],
+  "scopeExclusions": [
+    "Bank/payment gateway integration",
+    "Actual cash or refund evidence owned by finance",
+    "Paid PART execution mapping requires separate exact part/quantity/application coverage authority; generic PART fee amount never grants stock permission"
+  ]
+}

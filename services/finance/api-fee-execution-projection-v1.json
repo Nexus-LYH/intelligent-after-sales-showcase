@@ -1,0 +1,10 @@
+{
+  "version":"fee-execution-projection-v1",
+  "method":"GET",
+  "path":"/api/finance/groups/{groupId}/fee-execution-projection?completionId={completionId}",
+  "authority":"server-only; browser must not calculate balances",
+  "bindings":["current tenant","current company scope","groupId","completionId","quoteId","quoteVersion","generation","current finance group version"],
+  "ownerSources":{"LABOR":"ticket","OTHER":"ticket","PART":"stock verified USE"},
+  "response":["approved amount/quantity","executed amount/quantity","remaining amount/quantity","factVersion","completionState","executionState","per-line ownerSource and receipt"],
+  "failure":"owner missing, 404, timeout, stale generation or inconsistent fact returns 503 and no partial projection"
+}

@@ -1,0 +1,138 @@
+name: Portable build and unit checks
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'integration/**', 'feature/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portable-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-portable:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: 'services/**/pom.xml'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0'
+      - name: Build existing service modules and run their explicit portable tests
+        run: >-
+          mvn --batch-mode --no-transfer-progress -f services/pom.xml
+          -pl trust,identity,asset,ticket,gateway -am
+          '-Dtest=AuthCryptoTest,DomainPolicyTest,FeeMoneyPolicyTest,ApprovalBoundaryTest,ApprovalSettlementTest,CompletionTimingTest,SupplementTimingTest,ReopenWindowTest,StockExecutionBoundaryTest,StockEngineerQualificationTest,StockEngineerSecurityBoundaryTest,FinanceGatewayBoundaryTest,MembershipRoleGatewayBoundaryTest,MembershipRoleServiceTest,MembershipRoleRequestBoundaryTest,MembershipRoleErrorsTest,MembershipRoleEligibilityTest,FinanceQuoteBoundaryTest,FinanceQuoteSourceAdapterTest,FinanceFreezeCoordinatorTest,FinanceQuoteReferencesTest,FeeApprovalContextTest,FinanceVouchersTest,FeeCompletionPullTest,FinanceLaborExecutionStoreTest,FinanceLaborExecutionHttpTest,ConfigureFinanceCustomerTest'
+          -Dsurefire.failIfNoSpecifiedTests=false clean verify
+      - name: Require every selected suite to execute without skips
+        run: |
+          node --test ops/ci/verify-portable-reports.test.mjs
+          node ops/ci/verify-portable-reports.mjs
+      - name: Preserve portable test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable-junit-${{ github.sha }}
+          path: |
+            services/identity/target/surefire-reports/TEST-com.ias.identity.AuthCryptoTest.xml
+            services/identity/target/surefire-reports/TEST-com.ias.identity.auth.DomainPolicyTest.xml
+            services/ticket/target/surefire-reports/TEST-com.ias.ticket.Approval*Test.xml
+            services/ticket/target/surefire-reports/TEST-com.ias.ticket.*TimingTest.xml
+            services/ticket/target/surefire-reports/TEST-com.ias.ticket.ReopenWindowTest.xml
+            services/ticket/target/surefire-reports/TEST-com.ias.ticket.StockExecutionBoundaryTest.xml
+            services/ticket/target/surefire-reports/TEST-com.ias.ticket.FinanceQuoteBoundaryTest.xml
+            services/ticket/target/surefire-reports/TEST-com.ias.ticket.FinanceQuoteSourceAdapterTest.xml
+            services/ticket/target/surefire-reports/TEST-com.ias.ticket.FinanceFreezeCoordinatorTest.xml
+            services/ticket/target/surefire-reports/TEST-com.ias.ticket.FinanceQuoteReferencesTest.xml
+            services/ticket/target/surefire-reports/TEST-com.ias.ticket.FeeApprovalContextTest.xml
+            services/ticket/target/surefire-reports/TEST-com.ias.ticket.FinanceVouchersTest.xml
+            services/ticket/target/surefire-reports/TEST-com.ias.ticket.FeeCompletionPullTest.xml
+            services/ticket/target/surefire-reports/TEST-com.ias.ticket.FinanceLaborExecutionStoreTest.xml
+            services/ticket/target/surefire-reports/TEST-com.ias.ticket.FinanceLaborExecutionHttpTest.xml
+            services/identity/target/surefire-reports/TEST-com.ias.identity.auth.FeeMoneyPolicyTest.xml
+            services/asset/target/surefire-reports/TEST-com.ias.asset.MembershipRole*Test.xml
+            services/identity/target/surefire-reports/TEST-com.ias.identity.auth.MembershipRoleEligibilityTest.xml
+            services/identity/target/surefire-reports/TEST-com.ias.identity.bootstrap.ConfigureFinanceCustomerTest.xml
+            services/gateway/target/surefire-reports/TEST-com.ias.gateway.MembershipRoleGatewayBoundaryTest.xml
+            services/identity/target/surefire-reports/TEST-com.ias.identity.auth.StockEngineerQualificationTest.xml
+            services/identity/target/surefire-reports/TEST-com.ias.identity.config.StockEngineerSecurityBoundaryTest.xml
+            services/gateway/target/surefire-reports/TEST-com.ias.gateway.FinanceGatewayBoundaryTest.xml
+          if-no-files-found: warn
+          retention-days: 7
+
+  domains-portable:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: 'services/**/pom.xml'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0'
+      - name: Run portable domain tests; dedicated MySQL tests run with protected local evidence
+        run: >-
+          mvn --batch-mode --no-transfer-progress -f services/pom.xml
+          -pl approval,stock,finance,notification,ai -am
+          '-Dtest=*Test,!*MySqlTest' -Dsurefire.failIfNoSpecifiedTests=false clean verify
+      - name: Require nonempty clean reports for every domain
+        run: |
+          node --test ops/ci/verify-domain-reports.test.mjs
+          node ops/ci/verify-domain-reports.mjs
+      - name: Preserve domain test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: domains-junit-${{ github.sha }}
+          path: |
+            services/approval/target/surefire-reports/TEST-*.xml
+            services/stock/target/surefire-reports/TEST-*.xml
+            services/finance/target/surefire-reports/TEST-*.xml
+            services/notification/target/surefire-reports/TEST-*.xml
+            services/ai/target/surefire-reports/TEST-*.xml
+          if-no-files-found: warn
+          retention-days: 7
+
+  frontend-portable:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0'
+          cache: npm
+          cache-dependency-path: |
+            apps/staff/package-lock.json
+            apps/customer/package-lock.json
+      - name: Install both applications from lockfiles
+        run: |
+          npm ci --prefix apps/staff
+          npm ci --prefix apps/customer
+      - name: Run shared authentication and workflow unit tests
+        run: npm test --prefix apps/staff
+      - name: Typecheck and build both applications
+        run: |
+          npm run build --prefix apps/staff
+          npm run build --prefix apps/customer
+

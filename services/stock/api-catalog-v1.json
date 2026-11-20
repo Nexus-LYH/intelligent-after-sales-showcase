@@ -1,0 +1,11 @@
+{
+  "version": "14.18-stock-catalog-v1",
+  "gatewayRequired": true,
+  "getWarehouses": {"path":"/api/stock/warehouses", "query":{"ticketId":"required canonical UUID","assignmentId":"required canonical UUID","page":"default 1, max 100000","size":"20(default), 50, 100"}, "response":{"items":[{"id":"positive BIGINT string","name":"string"}],"total":"number","page":"number","size":"number"}},
+  "getParts": {"path":"/api/stock/warehouses/{warehouseId}/parts", "query":"same as getWarehouses", "response":{"items":[{"id":"positive BIGINT string","code":"string","name":"string","model":"string","unit":"string"}],"total":"number","page":"number","size":"number"}},
+  "getBalances": {"path":"/api/stock/warehouses/{warehouseId}/balances", "query":{"partId":"optional positive BIGINT string","page":"same paging","size":"same paging"},"authorization":"current stock.read plus explicit warehouseIds scope; never role alone"},
+  "authorization":"current enabled EMPLOYEE and STOCK_CATALOG authorization; own current IN_PROGRESS ticket and exact current assignment via stock-ticket online context; tenant enabled warehouse/part metadata only, no quantities",
+  "failures":{"400":"malformed, duplicate or unknown parameters","401":"invalid session","403":"current permission/context denied","404":"disabled, other tenant or inaccessible object","503":"dependency/trust unavailable; never bypass"},
+  "cacheControl":"no-store",
+  "internalApprovalCheck":{"method":"POST","path":"/internal/stock/approval-check","body":{"sessionToken":"opaque private token","warehouseId":"positive BIGINT string","partId":"positive BIGINT string"},"authorization":"approval-stock TLS/per-edge bearer; online STOCK_CATALOG principal; approval separately authorizes ticket relation"}
+}

@@ -1,0 +1,9 @@
+package com.ias.gateway;
+import org.junit.jupiter.api.Test;
+import java.nio.file.*;
+import java.sql.*;
+import java.util.*;
+import static org.junit.jupiter.api.Assertions.*;
+class SupplementGrantTest {
+ @Test void supplementHistoryAndFileContextAreImmutableToRuntimePrincipal()throws Exception{var f=new TicketFlowTest();var h=f.h;h.credentials=h.read(h.privateRoot.resolve("mysql-credentials.json"));try(var c=f.ticketDb(true);var s=c.createStatement()){for(String table:List.of("ticket_supplement_request","ticket_supplement_reply","ticket_supplement_file_reference")){assertThrows(SQLException.class,()->s.executeUpdate("DELETE FROM "+table+" WHERE 1=0"));String column=table.endsWith("reference")?"file_id":"id";assertThrows(SQLException.class,()->s.executeUpdate("UPDATE "+table+" SET "+column+"="+column+" WHERE 1=0"));}for(String column:List.of("supplement_ticket_id","supplement_request_id","supplement_round_id","reply_operation_id","submission_id","device_id","user_id","tenant_id"))assertThrows(SQLException.class,()->s.executeUpdate("UPDATE ticket_file SET "+column+"="+column+" WHERE 1=0"));assertEquals(0,s.executeUpdate("UPDATE ticket_file SET state=state,generation=generation WHERE 1=0"));assertEquals(0,s.executeUpdate("UPDATE ticket_record SET current_supplement_id=current_supplement_id,first_response_priority=first_response_priority WHERE 1=0"));assertThrows(SQLException.class,()->s.executeUpdate("UPDATE ticket_solution_decision SET excluded_supplement_ms=excluded_supplement_ms WHERE 1=0"));}Files.writeString(Path.of("target/batch8-runtime-grants.json"),h.json.writeValueAsString(Map.of("mode","actual3307 runtime principal zero-row privilege probes","historyUpdateDeleteDenied",true,"fileContextUpdateDenied",true,"mutableStorageStateOnly",true,"businessRowsChanged",0)));}
+}

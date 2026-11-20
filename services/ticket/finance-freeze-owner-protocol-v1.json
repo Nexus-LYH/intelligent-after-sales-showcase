@@ -1,0 +1,120 @@
+{
+  "version": "1.1-real-coordinator",
+  "state": "IMPLEMENTED_SELF_REAL_DEFAULT_COMPOSITION_INDEPENDENT_QA_PENDING",
+  "boundary": "No FINANCE quote freeze success until every required owner has persisted an ACK bound to the same immutable intent. Existing expectedGroupVersion=0, no observed rows, ticket status or booleans alone are not evidence.",
+  "immutableBinding": [
+    "tenantId",
+    "actorUserId",
+    "companyId",
+    "faultRelationId",
+    "ticketId",
+    "roundId",
+    "groupId",
+    "expectedGroupVersion",
+    "quoteId",
+    "operationId",
+    "commandDigest",
+    "freezeId",
+    "generation",
+    "ticketFenceDigest"
+  ],
+  "queue": [
+    {
+      "step": 1,
+      "owner": "finance original backend owner only",
+      "files": "services/finance/**",
+      "deliver": "Persist a source intent and original-UUID ABORT fence independently before cross-owner preparation; exact quote body/digest and original actor binding; trusted immutable source query to distinguish COMMITTED/ABORTED/IN_PROGRESS. Confirmation/local request/fee-group update keeps existing physical transaction. No late quote may commit after its source intent has been fenced ABORTED."
+    },
+    {
+      "step": 2,
+      "owner": "root public integration; BE-0 previous execution slot PAUSED",
+      "files": "ticket FinanceFreezeCoordinator/FinanceFreezeProofController/FinanceQuoteBoundary and V13; existing execution hook remains root-owned",
+      "deliver": "Under ticket lock persist a monotonic per-ticket/fault-relation generation and full binding; FENCING immediately rejects NEW execution permits. Existing prepared/in-doubt permits are queried/drained by their original IDs; do not ACK empty by ignoring old permits. Persist required-owner set and each immutable owner receipt before reaching ACKED."
+    },
+    {
+      "step": 3,
+      "owner": "root approval owner only",
+      "files": "new approval FinanceGeneration*; root owns any insertion point in current stock approval/execution classes",
+      "deliver": "Every paid approval mutation obtains the same durable generation barrier before creating/changing coverage. Freeze locks owner generation and persists exact affected approval IDs/versions and outcome. Return ACK only after invalidation/freeze commits; no approval can be created behind an empty-scan ACK."
+    },
+    {
+      "step": 4,
+      "owner": "root stock owner only",
+      "files": "new stock FinanceGeneration*; root owns StockExecutions hooks",
+      "deliver": "Reserve/issue/use/return and cancellation sharing the paid coverage must lock durable owner generation. Freeze persists exact order/permit IDs, versions, quantities and unresolved receipts. Prepared/unknown issue/use cannot be called clear. ACK binds canonical coverage digest and generation; retries query original immutable receipt."
+    },
+    {
+      "step": 5,
+      "owner": "root public integration",
+      "files": "new ticket FinanceFreeze* only",
+      "deliver": "FinanceQuoteBoundary /internal/ticket/finance-quotes/prepare commits the fence before network calls. Only exact persistent approval+stock ACKs and a clear W permit ledger yield FROZEN/globalFreezeAck. Legacy finance-context QUOTE stays503; no booleans or version-zero bypass."
+    },
+    {
+      "step": 6,
+      "owner": "finance original backend owner and P/N owner adapters",
+      "files": "each role edits its own domain only",
+      "deliver": "On committed immutable quote publish final source fact via same-transaction outbox; owners finalize generation against trusted original finance operation. On ABORT use the persistent finance ABORT fact, never a not-found observation or TTL. Owner ACK/commit loss uses original UUID and remains fenced until reconciled; no direct cross-owner SQL."
+    },
+    {
+      "step": 7,
+      "owner": "QA independent slice after actual combination ready",
+      "deliver": "Fresh MySQL minimum grants + real TLS identity and current scope; first-ever quote with real empty-owner ACK; nonzero version no-old-execution case; old in-flight issue/use and delayed callback; concurrent quote/issue/cancel; dropped ACK/commit; source ABORT versus late prepare; audit rollback; stale digest/version/round/company; no silent ACK for disabled/unimplemented paid owner."
+    }
+  ],
+  "requiredFreezeStates": [
+    "FENCING",
+    "FROZEN",
+    "RECONCILING",
+    "RELEASED"
+  ],
+  "neverInferClearFrom": [
+    "expectedGroupVersion == 0",
+    "empty UI list",
+    "new ticket",
+    "no local fee row",
+    "a successful remote GET",
+    "current device ownership",
+    "unimplemented external workflow"
+  ],
+  "implementationOwnerConflictRule": "Root owns existing stock execution permit and P stock-context files; BE-0 may add coordinator files only, root alone inserts existing action hooks. Finance remains original backend owner. No parallel overwrite.",
+  "currentImplementation": "W V13 durable coordinator, leases, polling and immutable owner ACKs; P/S V6+V7 generation hooks, trusted14-field proof and terminal receipts; F V5 durable source + explicit ABORT. Current default services passed real charged quote/customer confirmation, partial ACK recovery, ABORT tombstones and terminal audit/timeout tests. Independent QA and full fee/paid-stock/payment authority remain pending. F outbox is retained; W reliable pull is the implemented delivery path, not a fabricated F outbox sent marker.",
+  "deadline": "2026-11-03 hard deadline unchanged; root must schedule these dependencies against actual capacity, not mark freeze done from this contract",
+  "sourceStates": [
+    "IN_PROGRESS",
+    "COMMITTED",
+    "ABORTED"
+  ],
+  "proofEndpoint": "POST /internal/ticket/finance-quotes/proof via approval-ticket or stock-ticket; no session replay",
+  "ownerEndpoints": [
+    "ticket-approval POST /internal/approval/finance-fences/prepare",
+    "ticket-approval POST /internal/approval/finance-fences/reconcile",
+    "ticket-stock POST /internal/stock/finance-fences/prepare",
+    "ticket-stock POST /internal/stock/finance-fences/reconcile"
+  ],
+  "terminalRules": [
+    "COMMITTED requires original64hex resultDigest; ABORTED preserves null resultDigest",
+    "Both owners must persist OWNER_RELEASED with identical full binding and source terminal fact before W RELEASED",
+    "ABORT before owner prepare uses a durable no-execution tombstone, not a synthetic prepare ACK",
+    "404, deadline, missing receipt and transport failure never release",
+    "Pending unclassified/paid work waits; only explicit withdraw/reject can drain pending P work. Approved UNKNOWN is not silently classified or withdrawn",
+    "RETURN/RELEASE/EXPIRE cleanup is distinct from new charge execution; historical receipts remain immutable",
+    "Old paid approvals cannot obtain fresh execution after generation advances; UNKNOWN issue/use and missing paid coverage remain closed"
+  ],
+  "retryImplementation": "W persistent state/lease_id/lease_until/attempts/next_attempt_at/last_error_code, bounded scheduled source pull and original owner requests; no network-held W business locks and no TTL terminal inference",
+  "evidenceReference": "协作记录/阶段0/公共集成运行证据/20261024FinanceFreeze/验证摘要.json",
+  "quoteReferenceDiscovery": {
+    "method": "GET",
+    "semantics": "Only W persisted COMMITTED source with matching immutable source result; historical reference, not active quote/confirmation/approval. Fetch Finance GET for current state and current authorization.",
+    "writes": "none; no new migration/grant",
+    "response": {
+      "items": "max20, generation descending: groupId, quoteId, quoteVersion, roundId, generation (all strings)",
+      "nextBeforeGeneration": "last returned generation if more, otherwise null"
+    },
+    "query": {
+      "beforeGeneration": "optional canonical positive BIGINT string; single; strict older-than"
+    },
+    "evidence": "协作记录/阶段0/公共集成运行证据/20261024报价发现入口/真实报价引用.json",
+    "path": "/api/ticket/tickets/{ticket}/finance-quote-references",
+    "authorization": "current finance.quote.read; active scoped employee department/company or active enterprise ADMIN via authenticated ticket-asset finance-membership"
+  }
+}

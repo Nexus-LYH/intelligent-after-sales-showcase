@@ -1,0 +1,59 @@
+{
+  "storage": "Stock-owned immutable private MySQL LONGBLOB, <=20MiB, signature allowlist PNG/JPEG/PDF, attachment/nosniff/no-store; not ticket files, not public URL",
+  "authority": "Current identity.stock.read/manage plus explicit warehouseIds; writes also require current CSRF and Origin; tenant/actor never accepted from JSON",
+  "idempotency": "Same UUID identical full command replays immutable original result; changed parameters409; no second balance increment; same-key concurrent actor/warehouse checked before replay",
+  "transaction": "warehouse -> part -> balance order; receipt normal immutable SELECT; balance+operation+movement+audit+outbox one transaction; uncertain rollback/commit connection quarantined/aborted, no restoreAutoCommit",
+  "routes": [
+    {
+      "path": "/api/stock/warehouses/{warehouseId}/inbound-files/{fileId}",
+      "unknown": "GET original fileId; 404 requires explicit same UUID same bytes; never automatic retry or generate new UUID",
+      "result": "fileId/warehouseId/contentHash/contentType/byteSize/state READY",
+      "headers": "Idempotency-Key exactly equals fileId; X-CSRF-TOKEN",
+      "body": "application/octet-stream raw bytes",
+      "method": "POST"
+    },
+    {
+      "path": "/api/stock/warehouses/{warehouseId}/inbound-files/{fileId}",
+      "result": "Authorized metadata only; pure query",
+      "method": "GET"
+    },
+    {
+      "path": "/api/stock/warehouses/{warehouseId}/inbound-files/{fileId}/content",
+      "result": "Current warehouse read authorization, attachment, no-store, single explicit bytes=start-end or start- Range; suffix/multiple invalid =>416",
+      "method": "GET or HEAD"
+    },
+    {
+      "body": {
+        "source": "1..500 nonblank chars",
+        "quantity": "positive BIGINT decimal string",
+        "evidenceFileId": "original UUID, same tenant/warehouse/uploader",
+        "partId": "positive BIGINT decimal string",
+        "batchNote": "1..500 nonblank chars"
+      },
+      "path": "/api/stock/warehouses/{warehouseId}/inbounds",
+      "result": "operationId/onHand (string historical resulting amount)/recordedAt UTC",
+      "method": "POST",
+      "headers": "Idempotency-Key original operation UUID; X-CSRF-TOKEN"
+    },
+    {
+      "path": "/api/stock/warehouses/{warehouseId}/inbound-operations/{operationId}",
+      "result": "Original actor only, current warehouse and evidence read permission; no write; 404 unknown or inaccessible",
+      "method": "GET"
+    },
+    {
+      "path": "/api/stock/warehouses/{warehouseId}/balances?partId={partId}&page=1&size=20",
+      "result": "Existing current stock.read+warehouse scope; onHand/reserved/available/rowVersion strings",
+      "method": "GET"
+    }
+  ],
+  "state": "IMPLEMENTED_HTTP_SELF_VALIDATED_INDEPENDENT_PENDING",
+  "version": "stock-inbound-v1",
+  "limits": [
+    "No frontend inbound page in this slice",
+    "Outbox is a committed owner fact only, no stock delivery worker or notification claimed",
+    "No retention cleanup/delete endpoint yet: evidence retained, never falsely marked cleaned; cleanup and accounting reference protection required before enabling deletion",
+    "No reservation/issue/use/return in this slice",
+    "Signature allowlist only; no antivirus or full document validation claim",
+    "Production shared-storage/deployment resources remain section14.13.1"
+  ]
+}

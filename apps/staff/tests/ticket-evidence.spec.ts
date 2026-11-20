@@ -1,0 +1,9 @@
+import{describe,it,expect}from'vitest';import{referencedEvidence}from'../src/ticket-evidence';
+const round='11111111-2222-4333-8444-555555555555',file={fileId:'f1',name:'old.pdf',mediaType:'application/pdf',size:12,sha256:'a'.repeat(64),state:'READY'},t={id:'7',roundId:'new'},row=()=>({requestId:'q',ticketId:'7',roundId:round,assignmentId:'old-assignment',question:'旧轮公开补充问题',state:'REPLIED',resumeState:'IN_PROGRESS',requestedAt:'2026-10-20T01:00:00Z',requestedBy:'201',reply:{replyId:'r',body:'已回复公开补充',repliedAt:'2026-10-20T01:01:00Z',operationId:'op',repliedBy:'301',attachments:[{...file}]}}as any);
+describe('B11 explicit previous referenced evidence',()=>{
+ it('reads selected old-round referenced READY files without migrating reply context',()=>{const r=row();expect(referencedEvidence([r],t as any,round)).toEqual([file]);expect(r.roundId).toBe(round);expect(t.roundId).toBe('new')})
+ it('rejects other ticket/round and unknown upload state',()=>{for(const bad of[{ticketId:'8'},{roundId:'foreign'}])expect(()=>referencedEvidence([{...row(),...bad}],t as any,round)).toThrow();const r=row();r.reply.attachments[0].state='UPLOADING';expect(()=>referencedEvidence([r],t as any,round)).toThrow()})
+ it('does not expose internal storage metadata',()=>{const r=row();r.reply.attachments[0].storagePath='private';expect(()=>referencedEvidence([r],t as any,round)).toThrow()})
+ it('deduplicates immutable references but rejects contradictory digest/size',()=>{expect(referencedEvidence([row(),row()],t as any,round)).toHaveLength(1);const changed=row();changed.reply.attachments[0].sha256='b'.repeat(64);expect(()=>referencedEvidence([row(),changed],t as any,round)).toThrow()})
+ it('open/cancelled unanswered request is never selectable evidence',()=>{const r=row();r.state='OPEN';r.reply=null;expect(referencedEvidence([r],t as any,round)).toEqual([])})
+})

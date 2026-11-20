@@ -1,0 +1,8 @@
+{
+  "javaExecutable": "C:/ias-local/Develop/jdk21/bin/java.exe",
+  "javaSha256": "REPLACE_WITH_JAVA_SHA256",
+  "roleConfigs": {
+    "ticket": "REPLACE_WITH_PRIVATE_TICKET_CHAIN_CONFIG_PATH",
+    "stock": "REPLACE_WITH_PRIVATE_STOCK_CHAIN_CONFIG_PATH"
+  }
+}

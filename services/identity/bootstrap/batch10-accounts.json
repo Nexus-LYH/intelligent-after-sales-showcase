@@ -1,0 +1,26 @@
+{
+  "tenants": [
+    {
+      "code": "IAS6_A",
+      "name": "第六批独立服务商A"
+    }
+  ],
+  "users": [
+    {
+      "passwordRef": "b10ExistingAdminValidation",
+      "account": "ops.admin",
+      "tenantCode": "IAS6_A",
+      "displayName": "第六批A建档员",
+      "administrator": true,
+      "realm": "TENANT"
+    },
+    {
+      "passwordRef": "b10ATargetInitial",
+      "account": "engineer.transfer.browser",
+      "tenantCode": "IAS6_A",
+      "displayName": "转派验证工程师二",
+      "administrator": false,
+      "realm": "TENANT"
+    }
+  ]
+}

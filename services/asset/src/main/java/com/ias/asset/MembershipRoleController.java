@@ -1,0 +1,10 @@
+package com.ias.asset;
+import com.ias.trust.*;import jakarta.servlet.http.HttpServletRequest;import org.springframework.jdbc.core.JdbcTemplate;import org.springframework.transaction.support.TransactionTemplate;import org.springframework.web.bind.annotation.*;import java.util.*;
+@RestController
+public final class MembershipRoleController {
+ private final MembershipRoleAccess.Trusted access=new MembershipRoleAccess.Trusted();private final MembershipRoleService service;
+ public MembershipRoleController(JdbcTemplate db,TransactionTemplate tx){service=new MembershipRoleService(db,tx,access);}
+ @GetMapping("/api/asset/customer-companies/{company}/members/{member}/role") public Map<String,Object> view(@PathVariable String company,@PathVariable String member,HttpServletRequest request){return service.view(access.actor(request,false),MembershipRoleService.positive(company),MembershipRoleService.positive(member));}
+ @PostMapping("/api/asset/customer-companies/{company}/members/{member}/role") public Map<String,Object> change(@PathVariable String company,@PathVariable String member,@RequestBody Map<String,Object> body,HttpServletRequest request){if(!body.keySet().equals(Set.of("operationId","expectedVersion","role"))||!(body.get("role") instanceof String role))throw MembershipRoleService.invalid();String operation=MembershipRoleService.uuid(body.get("operationId"));if(!operation.equals(Chain.single(request,"Idempotency-Key")))throw MembershipRoleService.invalid();return service.change(access.actor(request,true),MembershipRoleService.positive(company),MembershipRoleService.positive(member),operation,MembershipRoleService.positive(body.get("expectedVersion")),role);}
+ @GetMapping("/api/asset/customer-companies/{company}/membership-role-operations/{operation}") public Map<String,Object> operation(@PathVariable String company,@PathVariable String operation,HttpServletRequest request){return service.operation(access.actor(request,false),MembershipRoleService.positive(company),MembershipRoleService.uuid(operation));}
+}

@@ -1,0 +1,21 @@
+<script setup lang="ts">
+import { ref, reactive, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { assets, activeStatus, type AssetRecord } from '../../../staff/src/asset-api'
+import { useAssetWork } from '../../../staff/src/asset-work'
+const route = useRoute(), router = useRouter(), work = useAssetWork(() => route.fullPath)
+const rows = ref<AssetRecord[]>([]), companies = ref<AssetRecord[]>([]), total = ref(0)
+const filter = reactive({ keyword: '', status: '', companyId: '', page: 1 })
+async function load() {
+  const scope = work.begin(); rows.value = []; companies.value = []; total.value = 0
+  try {
+    const summary = await assets.myCompanies(); if (!scope.current()) return
+    const query = new URLSearchParams({ page: String(filter.page), size: '20' }); for (const key of ['keyword','status','companyId'] as const) if (filter[key]) query.set(key, filter[key])
+    const data = await assets.list('devices', query); if (!scope.current()) return
+    companies.value = summary.items; rows.value = data.items.map(device => ({ ...device, companyName: summary.items.find(c => c.id === device.companyId)?.name })); total.value = data.total
+  } catch (e) { work.fail(e, scope) } finally { work.finish(scope) }
+}
+function search(page = 1) { void router.replace({ query: { keyword: filter.keyword || undefined, status: filter.status || undefined, companyId: filter.companyId || undefined, page } }) }
+watch(() => route.query, () => { filter.keyword = String(route.query.keyword ?? ''); filter.status = String(route.query.status ?? ''); filter.companyId = String(route.query.companyId ?? ''); filter.page = Math.max(1, Number(route.query.page) || 1); void load() }, { immediate: true })
+</script>
+<template><section class="page-heading"><p class="eyebrow">MY EQUIPMENT</p><h1>授权设备</h1><p>所属企业的设备档案与保修信息；设备范围以当前有效成员关系为准。</p></section><section v-if="companies.length" class="company-summary"><span v-for="company in companies" :key="company.id" class="company-chip">{{ company.name }} · {{ activeStatus(company.status) }}<span v-if="company.status === 'DISABLED' && company.disabledReason">：{{ company.disabledReason }}</span></span></section><section class="panel"><form class="filters" @submit.prevent="search()"><div><label for="device-keyword">关键词</label><el-input id="device-keyword" v-model="filter.keyword" placeholder="设备编号或序列号"/></div><div><label for="device-company">所属企业</label><el-select id="device-company" v-model="filter.companyId"><el-option label="全部授权企业" value=""/><el-option v-for="company in companies" :key="company.id" :label="company.name" :value="company.id"/></el-select></div><div><label for="device-status">设备状态</label><el-select id="device-status" v-model="filter.status"><el-option label="全部" value=""/><el-option label="启用" value="ENABLED"/><el-option label="停用" value="DISABLED"/></el-select></div><el-button native-type="submit" :disabled="work.loading.value">查询</el-button><el-button :disabled="work.loading.value" @click="load">刷新</el-button></form><p v-if="work.message.value" role="alert">{{ work.message.value }} <small>{{ work.trace.value }}</small></p><p v-if="work.loading.value" role="status">正在核对授权设备…</p><div v-else class="device-cards"><article v-for="device in rows" :key="device.id" class="device-card"><div class="section-heading"><h2>{{ device.code }}</h2><el-tag :type="device.status === 'ENABLED' ? 'success' : 'info'">{{ activeStatus(device.status) }}</el-tag></div><p>{{ device.modelName || `型号ID ${device.modelId}` }} · {{ device.serialNumber }}</p><p class="muted">{{ device.companyName }} · {{ device.location || '未提供位置' }}</p><p>保修：{{ device.warrantyStart || '未提供' }} — {{ device.warrantyEnd || '未提供' }}<span v-if="device.warrantyEnd && device.warrantyEnd < new Date().toISOString().slice(0,10)">（已到期，仅供参考）</span></p><p v-if="device.status !== 'ENABLED'" class="muted">设备已停用，请联系服务商。</p><RouterLink :to="{ path: `/devices/${device.id}`, query: { back: route.fullPath } }">查看设备详情 →</RouterLink></article><p v-if="!rows.length">暂无授权设备，请调整筛选或联系服务商建档。</p></div><el-pagination class="pagination" :total="total" :page-size="20" :current-page="filter.page" layout="prev, pager, next, total" @current-change="search"/></section></template>

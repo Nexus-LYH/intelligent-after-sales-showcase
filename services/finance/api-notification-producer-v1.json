@@ -1,0 +1,38 @@
+{
+  "version": "finance-notification-producer-v1",
+  "transport": {
+    "method": "POST",
+    "path": "/internal/notification/events",
+    "edge": "finance-notification",
+    "body": { "event": "DomainEvent" },
+    "successAck": ["COMMITTED", "COMMITTED_DUPLICATE"]
+  },
+  "events": [
+    "finance.collection_finalized",
+    "finance.refund_finalized"
+  ],
+  "identity": {
+    "eventId": "original finance_outbox.event_id and operation UUID",
+    "correlationId": "original operation UUID",
+    "aggregateId": "immutable money businessId",
+    "aggregateVersion": "money accountVersion"
+  },
+  "payload": [
+    "companyId", "groupId", "billId", "completionId", "accountVersion",
+    "action", "businessId", "amountCents", "authorityDigest",
+    "executionReceiptsDigest", "originalPaymentId", "moneyOccurredAt"
+  ],
+  "reliability": {
+    "businessCommitIndependentOfNotification": true,
+    "durableState": "finance_money_notification_delivery",
+    "leaseSeconds": 30,
+    "maxAttempts": 10,
+    "ackLoss": "same eventId and exact envelope is retried",
+    "restart": "PENDING or expired CLAIMED rows are recovered"
+  },
+  "publicIntegrationRequired": [
+    "trust Chain.finance-notification must allow POST /internal/notification/events",
+    "trust EdgeFilter notification role must accept finance-notification",
+    "notification generic ingress must map finance producer to current owner-context"
+  ]
+}

@@ -1,0 +1,12 @@
+spring:
+  servlet:
+    multipart:
+      enabled: false
+  application:
+    name: gateway
+server:
+  address: 127.0.0.1
+  port: 8080
+  forward-headers-strategy: none
+  max-http-request-header-size: 16KB
+

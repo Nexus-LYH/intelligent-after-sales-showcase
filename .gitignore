@@ -1,0 +1,33 @@
+﻿# IDE and system files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Build output and dependencies
+target/
+node_modules/
+dist/
+coverage/
+*.log
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+application-local.yml
+application-local.yaml
+application-local.properties
+secrets/
+*.key
+*.pem
+*.p12
+*.pfx
+.npmrc
+
+# Runtime data and backups
+runtime/
+uploads/
+backups/

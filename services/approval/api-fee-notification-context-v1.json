@@ -1,0 +1,10 @@
+{
+  "status":"candidate",
+  "method":"POST",
+  "path":"/internal/approval/fee-notification-context",
+  "edge":"notification-approval TLS/HMAC only",
+  "requestDelivery":["eventId","tenantId","eventType","aggregateId","aggregateVersion","feeGroupId","generation","purpose=DELIVERY"],
+  "requestRead":"same fields plus sessionToken and purpose=READ",
+  "response":["eventId","tenantId","eventType","aggregateId","aggregateVersion","feeGroupId","generation","companyId","departmentId","applicantUserId","factVersion","eventVersion=1","currentScope","qualified","revoked","checkedAt"],
+  "rules":"event/application/completion/binding/current generation must match; READ rechecks current identity company scope; wrong method/path/edge/tenant/object/generation/permission fails closed"
+}

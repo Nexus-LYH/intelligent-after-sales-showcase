@@ -1,0 +1,1 @@
+{"status":"FROZEN_N1_CANDIDATE","method":"POST","path":"/internal/finance/money-notification-context","edge":"notification-finance over TLS/HMAC","owner":"immutable V8/V9 money terminal + current fee group/account + current identity on READ","legacy":"V8 rows without V9 owner fields fail 503","wrong binding scope generation authority path method or trusted edge":"fail closed"}

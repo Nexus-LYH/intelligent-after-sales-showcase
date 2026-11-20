@@ -1,0 +1,198 @@
+{
+  "operationId": "c0c12bdd-e289-4f5e-80c3-bca31dc090b8",
+  "tenants": [
+    {
+      "tenantCode": "IAS6_A",
+      "departments": [
+        {
+          "code": "ENGINEERING_1",
+          "name": "工程一部",
+          "enabled": true,
+          "mode": "INITIALIZE"
+        },
+        {
+          "code": "ENGINEERING_2",
+          "name": "工程二部",
+          "enabled": true,
+          "mode": "INITIALIZE"
+        }
+      ],
+      "employees": [
+        {
+          "account": "ops.admin",
+          "departmentCode": null,
+          "enabled": true,
+          "capabilities": [],
+          "companyIds": [],
+          "assignableDepartmentCodes": [],
+          "mode": "INITIALIZE"
+        },
+        {
+          "account": "service.alpha",
+          "departmentCode": null,
+          "enabled": true,
+          "capabilities": [
+            "ticket.read",
+            "ticket.accept",
+            "ticket.reject",
+            "ticket.assign"
+          ],
+          "companyIds": [
+            "246"
+          ],
+          "assignableDepartmentCodes": [
+            "ENGINEERING_1",
+            "ENGINEERING_2"
+          ],
+          "mode": "INITIALIZE"
+        },
+        {
+          "account": "service.beta",
+          "departmentCode": null,
+          "enabled": true,
+          "capabilities": [
+            "ticket.read",
+            "ticket.accept",
+            "ticket.reject",
+            "ticket.assign"
+          ],
+          "companyIds": [
+            "247"
+          ],
+          "assignableDepartmentCodes": [
+            "ENGINEERING_2"
+          ],
+          "mode": "INITIALIZE"
+        },
+        {
+          "account": "engineer.alpha",
+          "departmentCode": "ENGINEERING_1",
+          "enabled": true,
+          "capabilities": [
+            "ticket.engineer.read",
+            "ticket.assignment.accept",
+            "ticket.record"
+          ],
+          "companyIds": [],
+          "assignableDepartmentCodes": [],
+          "mode": "INITIALIZE"
+        },
+        {
+          "account": "engineer.beta",
+          "departmentCode": "ENGINEERING_2",
+          "enabled": true,
+          "capabilities": [
+            "ticket.engineer.read",
+            "ticket.assignment.accept",
+            "ticket.record"
+          ],
+          "companyIds": [],
+          "assignableDepartmentCodes": [],
+          "mode": "INITIALIZE"
+        },
+        {
+          "account": "staff.ineligible",
+          "departmentCode": "ENGINEERING_1",
+          "enabled": true,
+          "capabilities": [
+            "ticket.engineer.read"
+          ],
+          "companyIds": [],
+          "assignableDepartmentCodes": [],
+          "mode": "INITIALIZE"
+        },
+        {
+          "account": "service.browser",
+          "departmentCode": null,
+          "enabled": true,
+          "capabilities": [
+            "ticket.read",
+            "ticket.accept",
+            "ticket.reject",
+            "ticket.assign"
+          ],
+          "companyIds": [
+            "246"
+          ],
+          "assignableDepartmentCodes": [
+            "ENGINEERING_1",
+            "ENGINEERING_2"
+          ],
+          "mode": "INITIALIZE"
+        },
+        {
+          "account": "engineer.browser",
+          "departmentCode": "ENGINEERING_1",
+          "enabled": true,
+          "capabilities": [
+            "ticket.engineer.read",
+            "ticket.assignment.accept",
+            "ticket.record"
+          ],
+          "companyIds": [],
+          "assignableDepartmentCodes": [],
+          "mode": "INITIALIZE"
+        }
+      ]
+    },
+    {
+      "tenantCode": "IAS6_B",
+      "departments": [
+        {
+          "code": "ENGINEERING_1",
+          "name": "工程一部",
+          "enabled": true,
+          "mode": "INITIALIZE"
+        },
+        {
+          "code": "ENGINEERING_2",
+          "name": "工程二部",
+          "enabled": true,
+          "mode": "INITIALIZE"
+        }
+      ],
+      "employees": [
+        {
+          "account": "ops.admin",
+          "departmentCode": null,
+          "enabled": true,
+          "capabilities": [],
+          "companyIds": [],
+          "assignableDepartmentCodes": [],
+          "mode": "INITIALIZE"
+        },
+        {
+          "account": "service.alpha",
+          "departmentCode": null,
+          "enabled": true,
+          "capabilities": [
+            "ticket.read",
+            "ticket.accept",
+            "ticket.reject",
+            "ticket.assign"
+          ],
+          "companyIds": [
+            "248"
+          ],
+          "assignableDepartmentCodes": [
+            "ENGINEERING_1"
+          ],
+          "mode": "INITIALIZE"
+        },
+        {
+          "account": "engineer.alpha",
+          "departmentCode": "ENGINEERING_1",
+          "enabled": true,
+          "capabilities": [
+            "ticket.engineer.read",
+            "ticket.assignment.accept",
+            "ticket.record"
+          ],
+          "companyIds": [],
+          "assignableDepartmentCodes": [],
+          "mode": "INITIALIZE"
+        }
+      ]
+    }
+  ]
+}

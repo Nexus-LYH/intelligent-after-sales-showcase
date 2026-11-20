@@ -1,0 +1,79 @@
+{
+  "quantities": "Reserve changes reserved only; issue subtracts onHand and reserved once; use changes line accounting, never onHand; return adds onHand, sum used+returned <= issued. State ACCOUNTED/RETURNED once all issued quantities accounted.",
+  "routes": [
+    {
+      "authority": "Current stock.manage + warehouse scope + CSRF; real approved P snapshot and W durable permit",
+      "path": "/api/stock/warehouses/{warehouseId}/orders/{approvalId}/reserve",
+      "method": "POST",
+      "body": [
+        "expectedVersion"
+      ]
+    },
+    {
+      "authority": "Same as reserve + unexpired reservation + explicit FREE; CUSTOMER_PAID/UNKNOWN fail503 before preparing an owner execution permit until full paid authority exists",
+      "path": "/api/stock/warehouses/{warehouseId}/orders/{approvalId}/issue",
+      "method": "POST",
+      "body": [
+        "expectedVersion"
+      ]
+    },
+    {
+      "authority": "Current stock.manage warehouse scope, original issued order, quantities <= issued-used-returned; cleanup allowed after original execution window",
+      "path": "/api/stock/warehouses/{warehouseId}/orders/{approvalId}/return",
+      "method": "POST",
+      "body": [
+        "expectedVersion",
+        "lines:[{partId,quantity}]"
+      ]
+    },
+    {
+      "authority": "Current TICKET_WORK/CSRF/ticket.record/current engineer, original approval/applicant/round/assignment; no stock.manage required",
+      "path": "/api/stock/engineering/orders/{approvalId}/uses",
+      "method": "POST",
+      "body": [
+        "expectedVersion",
+        "lines:[{partId,quantity}]"
+      ]
+    },
+    {
+      "path": "/api/stock/warehouses/{warehouseId}/orders/{approvalId}",
+      "method": "GET",
+      "effect": "Current authorized live order/state/version/line totals"
+    },
+    {
+      "path": "/api/stock/engineering/orders/{approvalId}",
+      "method": "GET",
+      "effect": "Current engineer authorization also required, old applicant alone cannot read after handover"
+    },
+    {
+      "path": "/api/stock/warehouses/{warehouseId}/execution-operations/{operationId}",
+      "method": "GET",
+      "effect": "Original actor + current scope only, pure immutable receipt"
+    },
+    {
+      "path": "/api/stock/engineering/execution-operations/{operationId}",
+      "method": "GET",
+      "effect": "Original actor and current engineer/object read only"
+    }
+  ],
+  "reservation": "Whole same-warehouse order only; insufficient => WAITING_STOCK with no partial reserve; expires=min(success+24h,approval+7d), strict now<expires for issue; bounded startup/periodic expiry releases once even disabled metadata; explicit retry after EXPIRED while within7d; all-returned cannot reuse approval",
+  "coordination": "W prepare under actor->ticket lock; OPEN blocks incompatible new ticket mutations; local quantity/receipt/movement/audit/outbox one transaction; W complete is an idempotent result digest ACK, not whole-parts cleanup. Bounded production worker retries committed original results after ACK lost. SQL/commit unknown keeps OPEN and original UUID. Known4xx gets durable rejected no-execution tombstone; late original cannot execute later.",
+  "scope": "Approved material whole-order reserve -> issue -> use/return, current owner permit, local durable ledger",
+  "ids": "Positive BIGINT and versions strings; canonical UUIDs; one Idempotency-Key operation UUID; body exact whitelist",
+  "contract": "stock.executions.v1",
+  "notYet": [
+    "Customer-paid execution requires missing finance owner generation/quantity/money proof and remains503",
+    "Whole-parts completion/financial cost owner propagation not implied by per-action complete ACK",
+    "All stock events except ticket permit ACK are still local outbox facts, not station/email delivery",
+    "No reservation/issue/use/return page yet; frontend can use this frozen contract",
+    "No actual24h7d wait or commit-kill acceptance; boundary tests use controlled unit clocks"
+  ],
+  "warehouseCatalog": {
+    "metadata": "warehouse id/name; part id/code/name/model/unit, including enabled parts without balance rows; no engineer ticket-catalog borrowing",
+    "paging": "page1..100000 size20/50/100, repeated/unknown params400; errors401/403/404/503 never grant a selection",
+    "warehouseList": "GET /api/stock/warehouse-catalog?page=1&size=20",
+    "parts": "GET /api/stock/warehouse-catalog/{warehouseId}/parts?page=1&size=20",
+    "identity": "Current stock.read plus explicit warehouseIds, count/pagination filtered before output; no scopes returns empty list; inactive warehouse/part omitted, invalid target404"
+  },
+  "deadline": "2026-11-03 unchanged"
+}

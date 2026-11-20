@@ -1,0 +1,30 @@
+{
+  "name": "ias-customer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "vue-tsc --noEmit",
+    "build": "npm run typecheck && vite build",
+    "browser": "node scripts/browser-check.mjs"
+  },
+  "dependencies": {
+    "@heroui/styles": "3.2.7",
+    "vue": "3.5.44",
+    "vue-router": "4.6.4",
+    "pinia": "3.0.4",
+    "element-plus": "2.14.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.5",
+    "tailwindcss": "4.3.5",
+    "@vitejs/plugin-vue": "6.0.10",
+    "vite": "8.3.4",
+    "typescript": "5.9.3",
+    "vue-tsc": "3.3.13",
+    "@types/node": "^24.0.0",
+    "vitest": "^4.0.0",
+    "playwright": "^1.55.0"
+  }
+}

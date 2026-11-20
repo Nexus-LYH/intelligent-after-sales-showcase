@@ -1,0 +1,155 @@
+{
+  "contract": "approval.parts.v1",
+  "version": "1.0.1-slice.2",
+  "status": "FROZEN_SINGLE_PART_HTTP_SLICE_TRUST_AND_MYSQL_PENDING",
+  "owner": "BE-P services/approval; BE-0 alone integrates parent reactor and trusted routes",
+  "requirements": [
+    "FR-APPROVAL-01",
+    "FR-APPROVAL-03 subset",
+    "P02/P03 subset"
+  ],
+  "authentication": "ApprovalAccess adapter must authenticate TLS/service edge, browser session, CSRF/origin for writes, current tenant/actor and current object qualifications. No client identity/authority fields. Production default adapter rejects all calls with 503 APPROVAL_TRUST_NOT_CONFIGURED.",
+  "headers": {
+    "POST": {
+      "Content-Type": "application/json",
+      "Idempotency-Key": "one canonical lowercase UUID, mandatory and exactly equal to body.operationId"
+    }
+  },
+  "inputRules": {
+    "body": "at most 65536 bytes including chunked body; unknown/duplicate JSON fields rejected",
+    "operationId": "canonical UUID, required; stable through unknown recovery; scoped by trusted tenant/actor and bound to action/target/complete parameters",
+    "ticketId": "canonical lowercase UUID string",
+    "assignmentId": "canonical lowercase UUID string; current acting engineer assignment, verified by trusted ticket adapter",
+    "departmentId": "positive BIGINT decimal string; current assignment department ID, not client authority",
+    "warehouseId": "positive signed-BIGINT decimal string, no leading zeros; existence/active/current tenant/warehouse scope checked by trusted stock adapter",
+    "partId": "positive signed-BIGINT decimal string, no leading zeros; actual part/warehouse relationship verified by trusted stock adapter",
+    "quantity": "JSON integer 1..2147483647, no float/string coercion",
+    "purpose": "5..500 Unicode code points, required",
+    "previousApplicationId": "optional UUID, only a WITHDRAWN or REJECTED application of same tenant/applicant/ticket; creates new id/revision and preserves old facts",
+    "expectedVersion": "nonnegative signed-BIGINT decimal STRING, no leading zeros except 0; required for decide/withdraw",
+    "outcome": "APPROVE or REJECT",
+    "reason": "APPROVE optional <=500; REJECT required 5..500; WITHDRAW optional <=500 Unicode code points"
+  },
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/api/approval/parts",
+      "bodyRequired": [
+        "operationId",
+        "ticketId",
+        "assignmentId",
+        "departmentId",
+        "warehouseId",
+        "partId",
+        "quantity",
+        "purpose"
+      ],
+      "bodyOptional": [
+        "previousApplicationId"
+      ],
+      "success": 200,
+      "result": "ApplicationView; submission with previousApplicationId creates a new revision, never edits the prior application"
+    },
+    {
+      "method": "GET",
+      "path": "/api/approval/parts/{applicationId}",
+      "success": 200,
+      "result": "current ApplicationView, current object authorization; GET writes no business/audit/outbox facts"
+    },
+    {
+      "method": "GET",
+      "path": "/api/approval/parts/operations/{operationId}",
+      "success": 200,
+      "result": "original result for current tenant/actor and operation UUID after CURRENT object authorization; receipt snapshot can be older than current application: refresh detail separately"
+    },
+    {
+      "method": "POST",
+      "path": "/api/approval/parts/{applicationId}/decisions",
+      "bodyRequired": [
+        "operationId",
+        "expectedVersion",
+        "outcome"
+      ],
+      "bodyOptional": [
+        "reason"
+      ],
+      "success": 200,
+      "result": "ApplicationView; current supervisor in source department and current object scope, not applicant; approval grants qualification only, never inventory execution"
+    },
+    {
+      "method": "POST",
+      "path": "/api/approval/parts/{applicationId}/withdrawals",
+      "bodyRequired": [
+        "operationId",
+        "expectedVersion"
+      ],
+      "bodyOptional": [
+        "reason"
+      ],
+      "success": 200,
+      "result": "ApplicationView; current enabled applicant with current object scope; only PENDING/WAITING_CONFIGURATION, no rewrite of approved/rejected history"
+    }
+  ],
+  "ApplicationView": {
+    "id": "UUID string",
+    "submission": {
+      "operationId": "UUID string",
+      "tenantId": "decimal string",
+      "applicantId": "decimal string",
+      "ticketId": "UUID string",
+      "assignmentId": "UUID string",
+      "departmentId": "positive BIGINT decimal string",
+      "warehouseId": "decimal string",
+      "partId": "decimal string",
+      "quantity": "integer",
+      "purpose": "string"
+    },
+    "state": "WAITING_CONFIGURATION|PENDING|APPROVED|REJECTED|WITHDRAWN",
+    "version": "decimal string",
+    "submittedAt": "UTC ISO8601 with Z",
+    "decision": "null or {operationId UUID,tenantId string,actorId string,expectedVersion decimal string,outcome APPROVE|REJECT,reason string}",
+    "decidedAt": "null or UTC ISO8601 with Z",
+    "revision": {
+      "rootApplicationId": "UUID string",
+      "number": "positive decimal string, distinct from optimistic version",
+      "previousApplicationId": "UUID string or null"
+    },
+    "withdrawal": "null or {operationId UUID,tenantId string,actorId string,expectedVersion decimal string,reason string}",
+    "withdrawnAt": "null or UTC ISO8601 with Z"
+  },
+  "errors": {
+    "400": "INVALID_REQUEST / INVALID_IDEMPOTENCY_KEY / INVALID_OBJECT_ID / INVALID_DEPARTMENT / INVALID_VERSION / INVALID_PURPOSE / INVALID_REASON / REASON_REQUIRED / other field errors",
+    "401": "SESSION_INVALID from future trusted adapter; no automatic retry",
+    "403": "NOT_AUTHORIZED; no replay using old permission",
+    "404": "TARGET_NOT_ACCESSIBLE or OPERATION_NOT_OBSERVED; original-operation 404 permits only explicit same UUID/same parameters retry after identity/context match, never a fresh UUID",
+    "409": "IDEMPOTENCY_CONFLICT / VERSION_CONFLICT / ALREADY_DECIDED / APPLICATION_WITHDRAWN / NOT_WITHDRAWABLE / REVISION_SOURCE_REQUIRED / TICKET_NOT_APPROVABLE / other state conflicts",
+    "413": "REQUEST_TOO_LARGE",
+    "503": "DEPENDENCY_UNAVAILABLE / OPERATION_RESULT_UNKNOWN / APPROVAL_TRUST_NOT_CONFIGURED; keep original UUID/parameters and query original operation, never declare success or start a new operation"
+  },
+  "errorShape": {
+    "code": "stable string",
+    "retryable": "boolean (503 only signals uncertain/recoverable, not permission to blindly replay)",
+    "traceId": "UUID string"
+  },
+  "cache": "Cache-Control:no-store for all successes and errors",
+  "atomicity": "one approval local transaction: reservation of operation UUID + application/CAS or new immutable revision + original receipt + append audit + append immutable approval_outbox envelope; real MySQL behavior not yet accepted",
+  "outbox": "approval_outbox uses events-v1 envelope with approval.submitted/approved/rejected/withdrawn and ticketId/requestId references. No delivery worker yet. BE-N generic event_outbox/event_delivery names differ; BE-0/N must wire a same-owner-transaction append/claim adapter before real notification acceptance. Do not publish via a separate notification DB transaction.",
+  "notImplemented": [
+    "trusted approval service edge and current identity/ticket/stock adapters",
+    "MySQL schema deployment/runtime/real HTTP browser",
+    "P01 lists/paging and drafts",
+    "multi-line part applications (this slice submits one line, not complete P03)",
+    "published approval rule snapshots/fee flow",
+    "approved cancellation/freeze owner receipts/expiry/reliable delivery",
+    "stock execution or charges"
+  ],
+  "evidenceScope": "pure domain tests, H2 JDBC transactions/concurrency/audit and outbox rollback, mock transaction failure ownership, Boot MockMvc strict wire/default failclosed. None replace MySQL/TLS/real account/browser/independent acceptance.",
+  "stockExecutionPolicy": {
+    "next": "Stock execution-api-v1.json; per-action ticket permit completion is not whole-parts cleanup",
+    "privateOwnerPort": "POST /internal/approval/stock-context",
+    "legacy": "Absent/null retains original request hash, old receipts and UNKNOWN policy; never defaults FREE",
+    "optionalSubmitField": "chargeMode FREE|CUSTOMER_PAID",
+    "currentRead": "Current GET shows explicit mode to reviewer; original result is historical only",
+    "persistence": "V4 approval_execution_policy inserted with original submission transaction"
+  }
+}

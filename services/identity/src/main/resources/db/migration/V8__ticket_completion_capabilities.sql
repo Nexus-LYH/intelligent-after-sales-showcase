@@ -1,0 +1,2 @@
+ALTER TABLE identity_user_capability DROP CHECK ck_capability_code;
+ALTER TABLE identity_user_capability ADD CONSTRAINT ck_capability_code CHECK(capability_code IN ('identity.session.revoke','identity.platform.session.revoke','asset.read','asset.manage','identity.customer.provision','ticket.read','ticket.accept','ticket.reject','ticket.assign','ticket.engineer.read','ticket.assignment.accept','ticket.record','ticket.solution.submit','ticket.close'));

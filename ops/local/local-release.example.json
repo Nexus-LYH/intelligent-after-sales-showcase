@@ -1,0 +1,39 @@
+{
+ "schemaVersion": 1,
+ "gitSha": "REPLACE_WITH_FINAL_40_HEX_SHA",
+ "databasePort": 3307,
+ "mysqlServer": {"executable":"C:\\ias-local\\Develop\\mysql8.4\\main\\bin\\mysqld.exe","sha256":"REPLACE_SHA256","configPath":"C:\\ias-local\\Develop\\IAS-MySQL84\\my.ini","configSha256":"REPLACE_SHA256"},
+ "javaExecutable": "C:/ias-local/Develop/jdk21/bin/java.exe",
+ "powershellExecutable": "C:/Program Files/PowerShell/7/pwsh.exe",
+ "launcher": "REPLACE_WITH_REVIEWED_EXTERNAL_Start-LocalChainService.ps1",
+ "launcherSha256": "REPLACE_WITH_64_HEX_SHA256",
+ "runtimeReferences": {
+  "environmentScript": "REPLACE_WITH_EXTERNAL_ENVIRONMENT_SCRIPT",
+  "environmentScriptSha256": "REPLACE_WITH_64_HEX_SHA256",
+  "chainDirectory": "REPLACE_WITH_PRIVATE_ROLE_CONFIGURATION_DIRECTORY",
+  "mysqlCredentialsConfig": "REPLACE_WITH_PRIVATE_MYSQL_CREDENTIAL_REFERENCES",
+  "domainRuntimeConfig": "REPLACE_WITH_PRIVATE_DOMAIN_CREDENTIAL_REFERENCES"
+ },
+ "runtimeManifest": "REPLACE_WITH_NEW_LOCAL_RUNTIME_MANIFEST_PATH",
+ "frontendServer": "REPLACE_WITH_PINNED_SERVE_DIST_MJS",
+ "frontendServerSha256": "REPLACE_SHA256",
+ "frontends": [
+  {"role":"staff","port":4173,"configPath":"REPLACE_PINNED_STAFF_CONFIG","configSha256":"REPLACE_SHA256"},
+  {"role":"customer","port":4174,"configPath":"REPLACE_PINNED_CUSTOMER_CONFIG","configSha256":"REPLACE_SHA256"}
+ ],
+ "services": [],
+ "migrations": [],
+ "tools": [
+  {"name":"java","executable":"C:/ias-local/Develop/jdk21/bin/java.exe","expectedVersion":"REPLACE_EXACT_VERSION","sha256":"REPLACE_SHA256"},
+  {"name":"node","executable":"REPLACE_NODE","expectedVersion":"REPLACE_EXACT_VERSION","sha256":"REPLACE_SHA256"},
+  {"name":"mysql","executable":"REPLACE_MYSQL","expectedVersion":"REPLACE_EXACT_VERSION","sha256":"REPLACE_SHA256"}
+ ],
+ "readinessAdapter":{"script":"REPLACE_PINNED_ROLE_TLS_PROBE","sha256":"REPLACE_SHA256","configPath":"REPLACE_RESTRICTED_PROBE_REFERENCES"},
+ "bootstrapAdapter":{"script":"REPLACE_PINNED_BOOTSTRAP_ADAPTER","sha256":"REPLACE_SHA256","configPath":"REPLACE_RESTRICTED_BOOTSTRAP_REFERENCES"},
+ "restoreReviewAdapter":{"script":"REPLACE_PINNED_RESTORE_REVIEW_ADAPTER","sha256":"REPLACE_SHA256","configPath":"REPLACE_RESTRICTED_RESTORE_REFERENCES"},
+ "schemas": ["ias_identity_test","ias_asset_test","ias_ticket_test","ias_approval_test","ias_stock_test","ias_notification_test","ias_finance_test"],
+ "privateFileRoots": [],
+ "mysqlOptionFile": "REPLACE_WITH_EXTERNAL_RESTRICTED_MYSQL_OPTION_FILE",
+ "mysqlExecutable": "REPLACE_WITH_EXISTING_MYSQL_CLIENT",
+ "mysqldumpExecutable": "REPLACE_WITH_EXISTING_MYSQLDUMP"
+}

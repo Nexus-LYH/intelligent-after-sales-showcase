@@ -1,0 +1,3 @@
+ALTER TABLE identity_employee_configuration ADD UNIQUE KEY uk_employee_tenant_user(tenant_id,user_id),ADD CONSTRAINT fk_employee_user_tenant FOREIGN KEY(tenant_id,user_id) REFERENCES identity_user(tenant_id,id);
+ALTER TABLE identity_employee_company_scope ADD CONSTRAINT fk_company_scope_employee_tenant FOREIGN KEY(tenant_id,user_id) REFERENCES identity_employee_configuration(tenant_id,user_id);
+ALTER TABLE identity_employee_department_scope ADD CONSTRAINT fk_department_scope_employee_tenant FOREIGN KEY(tenant_id,user_id) REFERENCES identity_employee_configuration(tenant_id,user_id);

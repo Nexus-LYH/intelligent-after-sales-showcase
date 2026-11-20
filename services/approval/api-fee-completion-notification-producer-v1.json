@@ -1,0 +1,9 @@
+{
+  "version":"approval-fee-completion-notification-producer-v1",
+  "owner":"approval",
+  "event":{"type":"approval.fee_completed","eventId":"immutable fee completion event UUID","aggregateId":"fee approval applicationId","aggregateVersion":"completed approval version","correlationId":"original completion command operation UUID"},
+  "sourceFacts":["fee_approval_completion","fee_approval_outbox FEE_APPROVAL_COMPLETED","event_outbox exact envelope"],
+  "transport":{"method":"POST","path":"/internal/notification/events","edge":"approval-notification","ack":["COMMITTED","COMMITTED_DUPLICATE"]},
+  "reliability":{"sameBusinessTransaction":true,"stableEventAndEnvelope":true,"leaseSeconds":30,"failedRetry":true,"restartRecovery":true,"ackLossRecovery":true},
+  "rule":"approval is the only producer; ticket must not synthesize approval completion"
+}

@@ -1,0 +1,9 @@
+{
+  "version":"stock-part-fee-notification-v1",
+  "event":{"producer":"stock","type":"inventory.consumed","eventId":"original PART execution operation UUID","aggregateId":"immutable PART execution receiptId","aggregateVersion":"generation","payloadRequired":["companyId","ticketId","roundId","feeGroupId","generation","executionId","lineId","warehouseId","partId","quantity","amountCents"]},
+  "transport":{"method":"POST","path":"/internal/notification/events","edge":"stock-notification","successAck":["COMMITTED","COMMITTED_DUPLICATE"]},
+  "ownerContext":{"method":"POST","edge":"notification-stock","path":"/internal/stock/part-fee-notification-context","purpose":"DELIVERY","exactFacts":["eventId","tenantId","eventType","companyId","ticketId","roundId","feeGroupId","generation","executionReceiptId","lineId","warehouseId","partId","quantity","amountCents"],"response":["actorUserId","coverageDigest","factVersion","eventVersion","currentScope","qualified","revoked","checkedAt"]},
+  "rule":"reservation, issue or requested use never implies charging; only the immutable verified USE-backed stock_finance_part_execution produces this event",
+  "failure":"unknown fact returns 404; any exact mismatch or revoked generation/warehouse/USE scope returns 409; invalid method/path/edge/bearer fails closed",
+  "publicIntegrationRequired":["trust stock-notification and notification-stock edges","notification DomainEvent fee classification for inventory.consumed with fee payload","notification owner resolver must call this stock context and must not impersonate ticket facts"]
+}

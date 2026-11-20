@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: identity
+  sql:
+    init:
+      mode: never
+  flyway:
+    enabled: false
+  liquibase:
+    enabled: false
+  datasource:
+    hikari:
+      maximum-pool-size: 8
+      connection-timeout: 2000
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+      connection-init-sql: SET SESSION innodb_lock_wait_timeout=2
+server:
+  address: 127.0.0.1
+  port: 8081
+  max-http-request-header-size: 16KB
+  forward-headers-strategy: none
+  tomcat:
+    max-http-form-post-size: 8KB
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-statement-timeout: 2
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+identity:
+  auth:
+    allowed-origins: http://127.0.0.1:8081,http://localhost:8081,http://127.0.0.1:5173
+# Local-only first implementation slice. No credentials or bootstrap users here.

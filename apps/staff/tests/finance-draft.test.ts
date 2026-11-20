@@ -1,0 +1,9 @@
+import{it,expect}from'vitest'
+import{reactive}from'vue'
+import{centsFromYuan,yuanFromCents,quoteBody,confirmationBody}from'../src/features/finance/quote-draft'
+const key='11111111-1111-4111-8111-111111111111'
+it('accepts actual reactive preview without cloning Vue proxies',()=>{const d=reactive({ticketId:key,expectedVersion:'0',quoteId:key,replaces:[],lines:[{id:key,amountCents:'1200',kind:'LABOR' as const}],chargesCustomer:true,pricingDescription:'真实预览'});expect(quoteBody(d,key).lines[0]!.amountCents).toBe('1200')})
+it('converts currency with decimal strings/BigInt without floating point loss',()=>{expect(centsFromYuan('0.29')).toBe('29');expect(centsFromYuan('90071992547409.93')).toBe('9007199254740993');expect(yuanFromCents('9007199254740993')).toBe('90071992547409.93')})
+for(const v of ['0','01.2','1.001','-1','1e2','1,000','92233720368547758.08'])it('rejects noncanonical/zero/overflow currency '+v,()=>expect(()=>centsFromYuan(v)).toThrow())
+it('binds exact quote/version/line IDs and forbids duplicate replacement/line facts',()=>{const d={ticketId:key,expectedVersion:'1',quoteId:key,replaces:[],lines:[{id:key,amountCents:'29',kind:'LABOR' as const}],chargesCustomer:true,pricingDescription:'人工核实后的计价说明'};expect(quoteBody(d,key).lines[0].amountCents).toBe('29');expect(()=>quoteBody({...d,lines:[...d.lines,...d.lines]},key)).toThrow();expect(()=>quoteBody({...d,replaces:[key,key]},key)).toThrow();expect(confirmationBody(key,'2','3')).toEqual({operationId:key,expectedVersion:'2',quoteVersion:'3'});expect(()=>confirmationBody(key,'01','3')).toThrow()})
+it('rejects client approval fields and oversized UTF8 bodies',()=>{const d={ticketId:key,expectedVersion:'1',quoteId:key,replaces:[],lines:[{id:key,amountCents:'29',kind:'LABOR' as const}],chargesCustomer:true,pricingDescription:'说明'};expect(()=>quoteBody({...d,approved:true} as typeof d,key)).toThrow();expect(()=>quoteBody({...d,pricingDescription:'费'.repeat(23000)},key)).toThrow()})

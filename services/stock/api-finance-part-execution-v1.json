@@ -1,0 +1,30 @@
+{
+  "contract": "stock.finance-part-execution.v1",
+  "scope": "Immutable owner mapping from one approved PART quote line to one persisted stock USE operation and part batch.",
+  "record": {
+    "method": "POST",
+    "path": "/internal/stock/finance-part-executions",
+    "edge": "ticket-stock TLS/HMAC only; BE-0 owns allowlist",
+    "headers": ["Idempotency-Key equals operationId", "X-CSRF-TOKEN"],
+    "exactBody": ["sessionToken", "operationId", "groupId", "completionId", "quoteId", "quoteVersion", "generation", "lineId", "orderId", "useOperationId", "partId", "quantity", "amountCents", "warehouseId", "companyId"]
+  },
+  "recover": {
+    "method": "GET",
+    "path": "/internal/stock/finance-part-execution-operations/{operationId}",
+    "edge": "ticket-stock TLS/HMAC only",
+    "rule": "Original actor plus current FEE_READ scope. A 404 never authorizes a changed-key retry."
+  },
+  "ownerQuery": {
+    "method": "POST",
+    "path": "/internal/stock/finance-part-executions/query",
+    "edge": "finance-stock TLS/HMAC only; BE-0 owns allowlist",
+    "exactBody": ["sessionToken", "groupId", "completionId", "quoteId", "quoteVersion", "generation", "operationId", "authorityDigest", "lines:[{lineId,amountCents}]"],
+    "returns": "Exact current-generation EXECUTED facts only: stable owner receipt and PART items with line/amount/quantity/part/warehouse/order/USE-operation/execution-receipt bindings."
+  },
+  "authority": "Record requires current employee FEE_SUBMIT, CSRF, company scope, current engineer/order fact and a fresh immutable approval completion whose selected line is PART with the exact amount. Query requires current MONEY_READ and company scope.",
+  "stockTruth": "Only stock_execution_operation action USE plus its positive exact stock_execution_movement.used_delta is accepted. RESERVE, ISSUE, requests, browser receipts and missing/404/timeout dependencies never imply charged execution.",
+  "serialization": "Record locks stock_finance_generation, then warehouse and execution order in the same order as stock execution. Active freeze, old generation, return/use in flight, quote replacement, cancellation and unresolved dependency fail closed or wait on the common lock.",
+  "uniqueness": "One tenant/group/generation/approved line and one tenant/USE-operation/part batch each map once. Same UUID and identical body recover; changed body conflicts.",
+  "transactions": "Execution, operation and audit commit together. Audit failure rolls all three back. Query is pure and does not mint facts.",
+  "integrationStatus": "Candidate contract only. V8 migration, trust/gateway allowlists and default service integration belong to BE-0; this file does not claim runtime or independent acceptance."
+}

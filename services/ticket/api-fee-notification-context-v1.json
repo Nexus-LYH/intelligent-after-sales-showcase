@@ -1,0 +1,9 @@
+{
+  "status":"FROZEN_N1_CANDIDATE",
+  "method":"POST",
+  "path":"/internal/ticket/fee-notification-context",
+  "edge":"notification-ticket over TLS/HMAC",
+  "requestFields":["eventId","tenantId","eventType","aggregateId","aggregateVersion","feeGroupId","generation","purpose","sessionToken(READ only)"],
+  "responseFields":["event binding echoes","companyId","departmentId","applicantUserId","factVersion","eventVersion","currentScope","qualified","revoked","checkedAt"],
+  "rules":["event must exist in ticket_fee_notification_outbox","ticket round assignment company reporter fee group generation and department must still be current","READ rechecks current identity and company scope","unknown fields wrong edge method path tenant object generation or revoked scope fail closed"]
+}

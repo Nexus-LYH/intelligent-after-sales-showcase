@@ -1,0 +1,11 @@
+# asset
+
+企业、成员、型号、设备归属的唯一所有者。3307/ias_asset_test，独立迁移与运行账号。V1仅本库外键，无identity跨库读表；identity的tenant/user标识只作为可信外部引用。
+
+接口/字段/状态及恢复协议见开发者设计/登录与会话最小契约草案.md第14节；本地启动、测试和私密配置规范见services/README.md。普通设备编辑不改变company/model/serial/code/ownershipVersion。客户正文和total都依赖asset当前ACTIVE成员；identity绑定门槛不等同于企业事实。
+
+客户协调不是分布式原子事务。REGISTERED/PENDING/MEMBERSHIP_COMMITTED/COMPLETED及BLOCKED按原操作恢复；密码只进入受控内存调用及identity User验证串，不进入asset表、审计或幂等摘要。BOUND回执后本地完成失败仍不得提供资产，必须显式恢复。GET不推进写入。
+
+测试位于gateway的ChainIntegrationTest，以独立进程调用真实接口；不把本模块无单测输出当作领域未测试或独立验收通过。
+
+企业管理员采用V3及api-membership-roles-v1.json的显式成员角色，不自动升级历史成员。赋撤须当前asset.manage、同租户公司对象、当前CSRF和成员版本；最后可用管理员保护在线查identity当前资格。finance仍独立检查明确read/confirm能力及当前ADMIN事实，成员角色不授财务能力。角色/成员版本/原UUID回执/审计同事务；操作查询不补写。上线前显式迁移V3、配置新表最小列权限及identity新精确资格边；不能用组件测试或旧JAR证明运行通过。

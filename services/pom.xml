@@ -1,0 +1,9 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.ias</groupId><artifactId>local-services</artifactId><version>0.0.1-SNAPSHOT</version><packaging>pom</packaging>
+  <modules>
+    <module>trust</module><module>identity</module><module>asset</module><module>ticket</module><module>gateway</module>
+    <module>approval</module><module>stock</module><module>finance</module><module>notification</module><module>ai</module>
+  </modules>
+</project>
+

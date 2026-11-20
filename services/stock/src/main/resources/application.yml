@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: stock
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+      accept-float-as-int: false
+  sql:
+    init:
+      mode: never
+  datasource:
+    hikari:
+      maximum-pool-size: 4
+      connection-timeout: 1000
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+      connection-init-sql: "SET SESSION innodb_lock_wait_timeout=2, time_zone='+00:00'"
+server:
+  address: 127.0.0.1
+  port: 8445
+  forward-headers-strategy: none

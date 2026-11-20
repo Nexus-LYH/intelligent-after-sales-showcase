@@ -1,0 +1,8 @@
+{
+  "version":"ticket-notification-producer-v1",
+  "transport":{"method":"POST","path":"/internal/notification/events","edge":"ticket-notification","successAck":["COMMITTED","COMMITTED_DUPLICATE"]},
+  "event":{"type":"ticket.fee_execution_recorded","eventId":"original fee execution operation UUID","aggregateId":"immutable execution receiptId","aggregateVersion":"committed ticket row version"},
+  "reliability":{"ownerTable":"ticket_fee_notification_outbox","sameBusinessTransaction":true,"leaseSeconds":30,"retrySameEnvelope":true,"restartRecovery":true},
+  "scopeNote":"approval.fee_completed remains approval-owned; ticket does not synthesize or impersonate approval producer facts",
+  "publicIntegrationRequired":["notification EdgeFilter must accept ticket-notification","notification generic ingress must resolve current ticket owner-context"]
+}

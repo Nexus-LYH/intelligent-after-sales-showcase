@@ -1,0 +1,44 @@
+// Synthetic late HTTP receipts in actual Chrome; explicit identity/lifecycle fixtures, no real backend claims.
+import { mkdir,writeFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
+process.env.IAS_BATCH7_FIXTURE_ONLY='1'
+const {fixture,dbFor,solution,check,open,solve,decide,closeForm,round,assignment,browser}=await import('./batch7-ui-check.mjs')
+const out=process.env.IAS_BATCH7_EVIDENCE||resolve('runtime/batch7-callbacks'),results=[];await mkdir(out,{recursive:true})
+const assert=(v,m)=>{if(!v)throw Error(m)}
+async function test(name,fn){if(process.env.IAS_BATCH7_CASE&&!name.includes(process.env.IAS_BATCH7_CASE))return;try{await fn();results.push({name,status:'PASS'})}catch(e){results.push({name,status:'FAIL',failure:e.stack})}await writeFile(resolve(out,'batch7-callback-results.json'),JSON.stringify({layer:'REAL_CHROME_SYNTHETIC_LATE_HTTP_EXPLICIT_IDENTITY_AND_COMPONENT_FIXTURES',results},null,2));console.log(JSON.stringify(results.at(-1)))}
+for(const kind of ['solve','decision','close','close-check','history','query'])for(const transition of ['identity-switch','remount-new-request'])for(const status of(kind==='query'?[200,401,403,404,503]:[200,401,403,503]))await test(`${kind}/${transition}/late-${status}`,async()=>{
+ const role=kind==='solve'?'engineer':kind==='close'||kind==='close-check'?'service':'customer',db=dbFor(kind==='solve'?'IN_PROGRESS':kind==='close'||kind==='close-check'?'RESOLVED':'PENDING_CUSTOMER_CONFIRMATION'),held=[]
+ let originalKey,postCount=0
+ function result(key){return{operationId:key,action:kind==='solve'?'solve':kind==='close'?'close':'customer-decision',state:'COMPLETED',ticketId:'7',roundId:round,assignmentId:assignment,rowVersion:'2',status:kind==='solve'?'PENDING_CUSTOMER_CONFIRMATION':kind==='close'?'CLOSED':'RESOLVED',solutionId:solution().solutionId,decision:'CONFIRM'}}
+ const f=await fixture(role,db,async({path,method,req,send})=>{
+  if(method==='POST'){postCount++;originalKey=req.headers()['idempotency-key'];if(kind==='query'){await send(503,{code:'OPERATION_RESULT_UNKNOWN'});return true}}
+  const target=kind==='history'?path.endsWith('/solutions')&&method==='GET':kind==='close-check'?path.endsWith('/close-check'):kind==='query'?path.includes('/action-operations/'):method==='POST'||path.includes('/action-operations/')
+  if(!target)return false
+  const index=held.length,key=method==='POST'?req.headers()['idempotency-key']:path.includes('/action-operations/')?path.split('/').at(-1):originalKey
+  await new Promise(release=>held.push(release))
+  if(index===0){if(status!==200){await send(status,{code:status===404?'OPERATION_NOT_FOUND':'OLD_RECEIPT'});return true}if(kind==='history'){await send(200,{items:[{...solution(),internalBody:'OLD INTERNAL'}],total:99,page:1,size:20});return true}await send(200,kind==='close-check'?{...check(db),rowVersion:'old'}:result(key));return true}
+  await send(200,kind==='history'?{items:[{...solution(),customerMessage:'Current owned public solution'}],total:1,page:1,size:20}:kind==='close-check'?check(db):result(key));return true
+ })
+ async function start(){if(kind==='solve')await solve(f.page);else if(kind==='decision'||kind==='query')await decide(f.page);else if(kind==='close'){await closeForm(f.page);await f.page.getByRole('button',{name:'确认客服收尾关闭',exact:true}).click()}else if(kind==='close-check'){await f.page.getByRole('button',{name:'客服收尾关闭',exact:true}).click();await f.page.getByRole('button',{name:'查询收尾核验',exact:true}).click()}}
+ async function waitHeld(n){await f.page.waitForFunction(()=>true);for(let i=0;i<150&&held.length<n;i++)await f.page.waitForTimeout(20);assert(held.length>=n,'request not held')}
+ try{
+  await open(f);if(kind!=='history')await start();if(kind==='query'){await f.page.getByRole('button',{name:'重新核验',exact:true}).click();await f.page.getByRole('button',{name:'查询原动作结果',exact:true}).click()}await waitHeld(1)
+  await f.page.evaluate(()=>{document.querySelector('#app').__vue_app__.config.globalProperties.$pinia._s.get('session').phase='AUTH_RECOVERY_PENDING'});await f.page.getByRole('heading',{name:'请确认当前状态',exact:true}).waitFor()
+  await f.page.evaluate(transition=>{const s=document.querySelector('#app').__vue_app__.config.globalProperties.$pinia._s.get('session');s.generation++;s.identity={...s.identity,loginAttemptId:'next-attempt',...(transition==='identity-switch'?{userId:'999',account:'new.actor'}:{})};s.csrf={...s.csrf,loginAttemptId:'next-attempt'};s.phase='NORMAL';s.notice='new-notice';s.traceId='new-trace'},transition)
+  await f.page.locator('.ticket-status').waitFor()
+  if(kind==='history')await waitHeld(2)
+  else if(transition==='remount-new-request'){if(kind==='close-check')await start();else await f.page.getByRole('button',{name:'查询原动作结果',exact:true}).click();await waitHeld(2)}
+  const label=kind==='close-check'?'查询收尾核验':'查询原动作结果'
+  if(transition==='remount-new-request'&&kind!=='history')await f.page.waitForFunction(label=>Array.from(document.querySelectorAll('button')).some(b=>b.textContent.trim()===label&&b.disabled),label)
+  const snapshot=()=>f.page.evaluate(()=>{const s=document.querySelector('#app').__vue_app__.config.globalProperties.$pinia._s.get('session');return JSON.stringify([s.phase,s.generation,s.identity?.userId,s.identity?.loginAttemptId,s.notice,s.traceId,location.href])})
+  const before=await snapshot();held[0]();await f.page.waitForTimeout(75);assert(before===await snapshot(),'old callback changed new identity/notice/navigation');assert(!await f.page.getByText('OLD INTERNAL',{exact:true}).count(),'old internal history processed')
+  if(kind==='history'){held[1]();await f.page.getByText('Current owned public solution',{exact:true}).waitFor()}
+  else if(transition==='remount-new-request'){assert(await f.page.getByRole('button',{name:label,exact:true}).isDisabled(),'old finally unlocked new owner');assert(!await f.page.getByRole('button',{name:'显式原UUID原参数重交',exact:true}).count(),'old404 opened replay');held[1]();if(kind==='close-check')await f.page.getByRole('heading',{name:'当前版本收尾核验',exact:true}).waitFor();else await f.page.getByText('原操作已确认完成，已按当前权限刷新。',{exact:true}).waitFor()}
+  assert(postCount===(['solve','decision','close','query'].includes(kind)?1:0),'automatic replay or lost request ownership')
+ }finally{for(const release of held)release();await f.ctx.close()}
+})
+for(const status of[200,401,403,404,503])await test(`new-solution/new-decision/late-${status}`,async()=>{
+ const db=dbFor('PENDING_CUSTOMER_CONFIRMATION'),held=[],keys=[];const f=await fixture('customer',db,async({path,method,req,send})=>{if(method!=='POST'||!path.endsWith('/decision'))return false;const index=held.length,key=req.headers()['idempotency-key'];keys.push(key);await new Promise(release=>held.push(release));if(index===0&&status!==200){await send(status,{code:status===404?'TARGET_NOT_ACCESSIBLE':'OLD_RECEIPT'});return true}if(index===1){db.ticket.status='RESOLVED';db.ticket.rowVersion='3'}await send(200,{operationId:key,action:'customer-decision',state:'COMPLETED',ticketId:'7',roundId:round,rowVersion:index===0?'2':'3',status:'RESOLVED',solutionId:solution(index+1).solutionId,decision:'CONFIRM'});return true})
+ try{await open(f);await decide(f.page);while(held.length<1)await f.page.waitForTimeout(20);await f.page.evaluate(()=>{document.querySelector('#app').__vue_app__.config.globalProperties.$pinia._s.get('session').phase='AUTH_RECOVERY_PENDING'});await f.page.getByRole('heading',{name:'请确认当前状态',exact:true}).waitFor();db.ticket.currentSolution=solution(2);db.ticket.rowVersion='2';db.solutions.push(db.ticket.currentSolution);await f.page.evaluate(()=>{const s=document.querySelector('#app').__vue_app__.config.globalProperties.$pinia._s.get('session');s.generation++;s.identity={...s.identity,loginAttemptId:'next'};s.csrf={...s.csrf,loginAttemptId:'next'};s.phase='NORMAL'});await f.page.getByRole('heading',{name:'旧方案原操作仅可查询',exact:true}).waitFor();assert(!await f.page.getByRole('button',{name:'显式原UUID原参数重交',exact:true}).count(),'old solution offered replay');await decide(f.page);while(held.length<2)await f.page.waitForTimeout(20);await f.page.waitForFunction(()=>Array.from(document.querySelectorAll('button')).some(b=>b.textContent.trim()==='查询原动作结果'&&b.disabled));held[0]();await f.page.waitForTimeout(75);assert(await f.page.getByRole('button',{name:'查询原动作结果',exact:true}).isDisabled(),'old decision cleared new busy');assert((await f.page.locator('body').innerText()).includes(keys[1]),'old receipt cleared new pending');held[1]();await f.page.locator('.ticket-status').filter({hasText:'已解决'}).waitFor();assert(keys.length===2&&keys[0]!==keys[1],'not independent original operations')}finally{for(const r of held)r();await f.ctx.close()}
+})
+await browser.close();console.log(JSON.stringify({passed:results.filter(r=>r.status==='PASS').length,failed:results.filter(r=>r.status==='FAIL').length}));if(results.some(r=>r.status==='FAIL'))process.exitCode=1
