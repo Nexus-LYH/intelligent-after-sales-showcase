@@ -92,7 +92,7 @@ jobs:
         run: >-
           mvn --batch-mode --no-transfer-progress -f services/pom.xml
           -pl approval,stock,finance,notification,ai -am
-          '-Dtest=*Test,!*MySqlTest' -Dsurefire.failIfNoSpecifiedTests=false clean verify
+          '-Dtest=*Test,!*MySqlTest,!StockLedgerMysqlReadTest' -Dsurefire.failIfNoSpecifiedTests=false clean verify
       - name: Require nonempty clean reports for every domain
         run: |
           node --test ops/ci/verify-domain-reports.test.mjs
